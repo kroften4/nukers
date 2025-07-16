@@ -36,8 +36,8 @@ int main(int argc, char **argv) {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     init_game(&local_state);
-    player = find_obj_by_type(local_state, OBJ_PLAYER);
-    camera = find_obj_by_type(local_state, OBJ_CAMERA);
+    player = find_obj_by_tag(local_state, OBJ_PLAYER);
+    camera = find_obj_by_tag(local_state, OBJ_CAMERA);
 
     struct update_args update_args = {
         .event = &event,
@@ -71,8 +71,9 @@ bool update(int delta_time, void *update_args_p) {
     SDL_Color bg_color = {255, 255, 255, 255};
     clear_screen(renderer, bg_color);
     SDL_Color player_color = {0, 0, 0, 255};
+    collide_state_objects(&local_state);
     for (size_t i = 0; i < local_state.obj_amount; i++) {
-        switch ((enum game_obj_type)local_state.objects[i]->type) {
+        switch ((enum game_obj_tag)local_state.objects[i]->tag) {
         case OBJ_BULLET:
             bullet_update(local_state.objects[i], delta_time);
             break;
@@ -83,8 +84,9 @@ bool update(int delta_time, void *update_args_p) {
             continue;
         }
     }
+    camera->pos = player->pos;
     for (size_t i = 0; i < local_state.obj_amount; i++) {
-        if ((enum game_obj_type)local_state.objects[i]->type == OBJ_CAMERA)
+        if ((enum game_obj_tag)local_state.objects[i]->tag == OBJ_CAMERA)
             continue;
         draw_game_obj(renderer, *local_state.objects[i], *camera, player_color);
     }

@@ -3,14 +3,7 @@
 
 #include "krft/engine.h"
 
-#define MAX_OBJECTS_AMOUNT 100
-
-struct game_state {
-    struct game_obj *objects[MAX_OBJECTS_AMOUNT];
-    size_t obj_amount;
-};
-
-enum game_obj_type {
+enum game_obj_tag {
     OBJ_CAMERA,
     OBJ_PLAYER,
     OBJ_TEAMMATE,
@@ -19,7 +12,7 @@ enum game_obj_type {
     OBJ_WALL,
 };
 
-struct game_obj *find_obj_by_type(struct game_state state, enum game_obj_type type);
+struct game_obj *find_obj_by_tag(struct game_state state, enum game_obj_tag type);
 
 void init_game(struct game_state *state);
 

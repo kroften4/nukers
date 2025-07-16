@@ -2,7 +2,6 @@
 #include "input.h"
 #include "player.h"
 #include "krft/engine.h"
-#include "krft/log.h"
 #include "krft/vector.h"
 #include "logic.h"
 #include <SDL3/SDL_events.h>
@@ -10,7 +9,9 @@
 
 void init_player(struct game_state *state) {
     struct game_obj *player = malloc(sizeof(struct game_obj));
-    player->type = OBJ_PLAYER;
+    player->on_collision = NULL;
+    player->coll_type = COLL_DYNAMIC;
+    player->tag = OBJ_PLAYER;
     player->pos.x = 0;
     player->pos.y = 0;
 
@@ -29,8 +30,6 @@ void player_move(struct game_obj *player, int delta_time) {
     player->velocity = vector_multiply(player->velocity,
                                        player->speed * delta_time);
     player->pos = vector_add(player->pos, player->velocity);
-    if (player->velocity.x != 0 || player->velocity.y != 0)
-        LOGF("player pos(%.2f %.2f)", player->pos.x, player->pos.y);
 }
 
 void player_shoot(struct game_state *state, struct game_obj player,
