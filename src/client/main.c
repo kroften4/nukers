@@ -2,14 +2,12 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_render.h>
-#include "bullet.h"
+#include "krft/vector.h"
 #include "logic.h"
-#include "krft/log.h"
 #include "krft/run_every.h"
-#include "player.h"
 #include "render.h"
 
-#define FPS_CAP 1000
+#define FPS_CAP 60
 #define MIN_FRAME_DURATION_MS 1000 / FPS_CAP
 
 static struct game_state local_state;
@@ -57,13 +55,13 @@ bool update(int delta_time, void *update_args_p) {
     struct update_args *args = update_args_p;
     SDL_Event *event = args->event;
     SDL_Renderer *renderer = args->renderer;
-    struct inputs inputs = {.lmb = false};
+    local_state.inputs.lmb = false;
     while (SDL_PollEvent(event)) {
         switch (event->type) {
         case SDL_EVENT_QUIT:
             return false;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            inputs.lmb = true;
+            local_state.inputs.lmb = true;
             break;
         }
     }
@@ -71,19 +69,7 @@ bool update(int delta_time, void *update_args_p) {
     SDL_Color bg_color = {255, 255, 255, 255};
     clear_screen(renderer, bg_color);
     SDL_Color player_color = {0, 0, 0, 255};
-    collide_state_objects(&local_state);
-    for (size_t i = 0; i < local_state.obj_amount; i++) {
-        switch ((enum game_obj_tag)local_state.objects[i]->tag) {
-        case OBJ_BULLET:
-            bullet_update(local_state.objects[i], delta_time);
-            break;
-        case OBJ_PLAYER:
-            player_update(&local_state, player, *camera, inputs, delta_time);
-            break;
-        default:
-            continue;
-        }
-    }
+    physics_step(&local_state, delta_time);
     camera->pos = player->pos;
     for (size_t i = 0; i < local_state.obj_amount; i++) {
         if ((enum game_obj_tag)local_state.objects[i]->tag == OBJ_CAMERA)

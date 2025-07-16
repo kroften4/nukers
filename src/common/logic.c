@@ -15,6 +15,7 @@ struct game_obj *find_obj_by_tag(struct game_state state, enum game_obj_tag tag)
 
 void init_camera(struct game_state *state) {
     struct game_obj *camera = malloc(sizeof(struct game_obj));
+    camera->on_physics_tick = NULL;
     camera->coll_type = COLL_NONE;
     camera->on_collision = NULL;
     camera->tag = OBJ_CAMERA;
@@ -29,6 +30,7 @@ void init_camera(struct game_state *state) {
 
 struct game_obj *init_wall_tile(struct game_state *state, size_t x, size_t y) {
     struct game_obj *tile = malloc(sizeof(struct game_obj));
+    tile->on_physics_tick = NULL;
     tile->coll_type = COLL_STATIC;
     tile->on_collision = NULL;
     tile->tag = OBJ_WALL;

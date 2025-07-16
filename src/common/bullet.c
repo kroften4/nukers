@@ -15,6 +15,7 @@ void bullet_on_collision(struct game_state *state, struct game_obj *bullet, stru
 void init_bullet(struct game_state *state, struct vector start_pos,
                  struct vector angle, float speed) {
     struct game_obj *bullet = malloc(sizeof(struct game_obj));
+    bullet->on_physics_tick = NULL;
     bullet->on_collision = bullet_on_collision;
     bullet->coll_type = COLL_DYNAMIC;
     bullet->tag = OBJ_BULLET;
@@ -30,6 +31,3 @@ void init_bullet(struct game_state *state, struct vector start_pos,
     state->objects[state->obj_amount++] = bullet;
 }
 
-void bullet_update(struct game_obj *bullet, int delta_time) {
-    *bullet = linear_move(*bullet, delta_time);
-}

@@ -16,6 +16,10 @@ enum collision_type {
     COLL_NONE
 };
 
+struct inputs {
+    bool lmb;
+};
+
 struct game_obj {
     int id;
     int tag;
@@ -24,7 +28,9 @@ struct game_obj {
     struct vector pos;
     struct vector velocity;
     struct vector size;
-    void (*on_collision)(struct game_state *state, struct game_obj *self, struct coll_info collision);
+    void (*on_collision)(struct game_state *state, struct game_obj *self,
+                         struct coll_info collision);
+    void (*on_physics_tick)(struct game_state *state, struct game_obj *self);
 };
 
 struct coll_info {
@@ -35,13 +41,15 @@ struct coll_info {
 
 struct game_state {
     struct game_obj *objects[MAX_OBJECTS_AMOUNT];
+    struct inputs inputs;
     size_t obj_amount;
 };
 
 void object_destroy(struct game_state *state, struct game_obj *object);
 
-void collide_state_objects(struct game_state *state);
+float resolve_first_toi(struct game_state *state, int delta_time);
 
+void physics_step(struct game_state *state, int delta_time);
 
 struct game_obj linear_move(struct game_obj obj, int delta_time);
 
@@ -64,7 +72,9 @@ struct vector linear_interpolate(struct vector pos, struct vector pos_next,
 
 bool is_valid_toi(float toi);
 
-float get_AABB_toi(struct game_obj obj1, struct game_obj obj2);
+void check_AABB_collision(struct game_obj obj1, struct game_obj obj2,
+                          float *result_toi, struct vector *normal1,
+                          int delta_time);
 
 #endif
 

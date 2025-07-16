@@ -12,10 +12,6 @@ enum direction {
     DIR_RIGHT
 };
 
-struct inputs {
-    bool lmb;
-};
-
 short get_input_vertical(void);
 
 short get_input_horizontal(void);

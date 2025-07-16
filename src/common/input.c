@@ -6,6 +6,8 @@
 #include "krft/vector.h"
 #include "render.h"
 
+struct inputs inputs;
+
 short get_input_vertical(void) {
     const bool *keyboard = SDL_GetKeyboardState(NULL);
     bool up = keyboard[SDL_SCANCODE_UP] || keyboard[SDL_SCANCODE_W];

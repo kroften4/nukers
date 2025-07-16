@@ -47,3 +47,8 @@ struct vector vector_random_angle(float min, float max, float step) {
          rnd, range, rnd_amount, rnd_angle, result.x, result.y);
     return result;
 }
+
+float vector_dot(struct vector vec1, struct vector vec2) {
+    return vec1.x * vec2.x + vec1.y * vec2.y;
+}
+
