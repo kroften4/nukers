@@ -2,7 +2,6 @@
 #include "input.h"
 #include "player.h"
 #include "krft/engine.h"
-#include "krft/log.h"
 #include "krft/vector.h"
 #include "logic.h"
 #include <SDL3/SDL_events.h>
@@ -48,8 +47,8 @@ void init_player(struct game_state *state) {
     player->on_physics_tick = player_update;
     player->coll_type = COLL_DYNAMIC;
     player->tag = OBJ_PLAYER;
-    player->pos.x = 0;
-    player->pos.y = 0;
+    player->pos.x = 200;
+    player->pos.y = 200;
 
     player->size.x = 20;
     player->size.y = 20;

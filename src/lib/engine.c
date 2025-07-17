@@ -135,10 +135,14 @@ void resolve_collision(struct game_state *state, float toi,
         obj2->on_collision(state, obj2, collision2);
 }
 
-void move_state_objects(struct game_state *state, int delta_time) {
+void move_state_objects(struct game_state *state, int delta_time, float toi) {
     for (size_t i = 0; i < state->obj_amount; i++) {
         struct game_obj *obj = state->objects[i];
-        struct vector corrected_vel = vector_multiply(obj->velocity, delta_time);
+        struct vector corrected_vel = vector_multiply(obj->velocity, delta_time * toi);
+        if (corrected_vel.x != 0 || corrected_vel.y != 0)
+            LOGF("vel (%f %f) -> (%f %f), dt %d, toi %f",
+                 obj->velocity.x, obj->velocity.y, corrected_vel.x,
+                 corrected_vel.y, delta_time, toi);
         obj->pos = vector_add(obj->pos, corrected_vel);
     }
 }
@@ -153,10 +157,16 @@ void physics_tick_notify(struct game_state *state) {
 
 void physics_step(struct game_state *state, int delta_time) {
     physics_tick_notify(state);
-    float passed_time = 0;
-    while (passed_time < delta_time) {
-        passed_time += resolve_first_toi(state, delta_time);
-        move_state_objects(state, delta_time);
+    int cap = 100;
+    int iterations = 0;
+    int passed_time = 0;
+    while (passed_time < delta_time && iterations < cap) {
+        int remaining_time = delta_time - passed_time;
+        passed_time += remaining_time * resolve_first_toi(state, remaining_time);
+        iterations++;
+    }
+    if (iterations == cap) {
+        ERROR("reached 100 collision iterations");
     }
 }
 
@@ -184,6 +194,9 @@ float resolve_first_toi(struct game_state *state, int delta_time) {
             float toi;
             struct vector normal;
             check_AABB_collision(*obj1, *obj2, &toi, &normal, delta_time);
+            if (toi == 0) {
+                resolve_collision(state, toi, obj1, obj2, normal);
+            }
             if (!is_valid_toi(toi))
                 continue;
 
@@ -204,10 +217,13 @@ float resolve_first_toi(struct game_state *state, int delta_time) {
             }
         }
     }
-    if (!is_valid_toi(toi_min))
+    if (!is_valid_toi(toi_min)) {
+        move_state_objects(state, delta_time, 1);
         return 1;
+    }
 
-    LOGF("toi %f, coll_amount %zu", toi_min, coll_amount);
+    LOGF("dt %d, toi %f, coll_amount %zu", delta_time, toi_min, coll_amount);
+    move_state_objects(state, delta_time, toi_min);
     for (size_t i = 0; i < coll_amount; i++) {
         resolve_collision(state, collisions[i].toi, collisions[i].obj1,
                           collisions[i].obj2, collisions[i].normal1);

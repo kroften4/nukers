@@ -2,7 +2,6 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_render.h>
-#include "krft/vector.h"
 #include "logic.h"
 #include "krft/run_every.h"
 #include "render.h"
@@ -21,6 +20,8 @@ struct update_args {
 bool update(int delta_time, void *update_args_p);
 
 int main(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
     // if (argc != 3) {
     //     ERRORF("Usage: %s <server ip/name> <port>", argv[0]);
     //     return 1;
