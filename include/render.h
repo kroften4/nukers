@@ -10,8 +10,7 @@ struct vector world_to_screen_coords(struct vector coords, struct game_obj camer
 
 struct vector screen_to_world_coords(struct vector coords, struct game_obj camera);
 
-void draw_game_obj(SDL_Renderer *renderer, struct game_obj object,
-                   struct game_obj camera, SDL_Color color);
+void draw_state(SDL_Renderer *renderer, struct game_state state);
 
 #endif
 

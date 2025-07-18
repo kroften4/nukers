@@ -12,6 +12,10 @@ enum game_obj_tag {
     OBJ_WALL,
 };
 
+enum particle_type {
+    PAR_EXPLOSION
+};
+
 struct game_obj *find_obj_by_tag(struct game_state state, enum game_obj_tag type);
 
 void init_game(struct game_state *state);

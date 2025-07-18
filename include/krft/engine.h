@@ -5,7 +5,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define MAX_OBJECTS_AMOUNT 100
+#define MAX_OBJECTS_AMOUNT 500
+#define MAX_PARTICLES_AMOUNT 2000
 
 struct coll_info;
 struct game_state;
@@ -18,6 +19,8 @@ enum collision_type {
 
 struct inputs {
     bool lmb;
+    bool mmb;
+    bool rmb;
 };
 
 struct game_obj {
@@ -39,10 +42,20 @@ struct coll_info {
     struct game_obj other;
 };
 
+struct particle {
+    int type;
+    struct vector pos;
+    struct vector velocity;
+    struct vector size;
+    int lifetime;
+};
+
 struct game_state {
     struct game_obj *objects[MAX_OBJECTS_AMOUNT];
-    struct inputs inputs;
     size_t obj_amount;
+    struct particle *particles[MAX_PARTICLES_AMOUNT];
+    size_t particle_amount;
+    struct inputs inputs;
 };
 
 void object_destroy(struct game_state *state, struct game_obj *object);
@@ -63,7 +76,7 @@ struct AABB_bounds {
     float right;
 };
 
-struct AABB_bounds AABB_get_bounds(struct game_obj obj);
+struct AABB_bounds AABB_get_bounds(struct vector pos, struct vector size);
 
 bool AABB_is_overlapping(struct game_obj first, struct game_obj second);
 
@@ -75,6 +88,8 @@ bool is_valid_toi(float toi);
 void check_AABB_collision(struct game_obj obj1, struct game_obj obj2,
                           float *result_toi, struct vector *normal1,
                           int delta_time);
+
+void particle_step(struct game_state *state, int delta_time);
 
 #endif
 

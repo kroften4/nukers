@@ -10,12 +10,12 @@ struct game_obj linear_move(struct game_obj obj, int delta_time) {
     return obj;
 }
 
-struct AABB_bounds AABB_get_bounds(struct game_obj obj) {
+struct AABB_bounds AABB_get_bounds(struct vector pos, struct vector size) {
     struct AABB_bounds boundaries = {
-        .up = obj.pos.y + obj.size.y / 2,
-        .down = obj.pos.y - obj.size.y / 2,
-        .left = obj.pos.x - obj.size.x / 2,
-        .right = obj.pos.x + obj.size.x / 2
+        .up = pos.y + size.y / 2,
+        .down = pos.y - size.y / 2,
+        .left = pos.x - size.x / 2,
+        .right = pos.x + size.x / 2
     };
     return boundaries;
 }
@@ -33,8 +33,8 @@ bool is_valid_toi(float toi) {
 }
 
 bool AABB_is_overlapping(struct game_obj first, struct game_obj second) {
-    struct AABB_bounds bounds1 = AABB_get_bounds(first);
-    struct AABB_bounds bounds2 = AABB_get_bounds(second);
+    struct AABB_bounds bounds1 = AABB_get_bounds(first.pos, first.size);
+    struct AABB_bounds bounds2 = AABB_get_bounds(second.pos, second.size);
     if (bounds1.down > bounds2.up)
         return true;
     if (bounds1.up < bounds2.down)
@@ -74,8 +74,8 @@ void check_AABB_collision(struct game_obj obj1, struct game_obj obj2,
                           int delta_time) {
     struct vector relative_vel = vector_subtract(obj1.velocity, obj2.velocity);
     relative_vel = vector_multiply(relative_vel, delta_time);
-    struct AABB_bounds obj1_bounds = AABB_get_bounds(obj1);
-    struct AABB_bounds obj2_bounds = AABB_get_bounds(obj2);
+    struct AABB_bounds obj1_bounds = AABB_get_bounds(obj1.pos, obj1.size);
+    struct AABB_bounds obj2_bounds = AABB_get_bounds(obj2.pos, obj2.size);
 
     float toi_min = 99;
     *normal1 = VEC_ZERO;
@@ -232,7 +232,7 @@ float resolve_first_toi(struct game_state *state, int delta_time) {
     return toi_min;
 }
 
-void remove_element_by_index(struct game_obj *objects[], size_t *n, size_t index) {
+void remove_element_by_index(void *objects[], size_t *n, size_t index) {
     *n -= 1;
     for (size_t i = index; i < *n; i++) {
         objects[i] = objects[i + 1];
@@ -243,10 +243,31 @@ void object_destroy(struct game_state *state, struct game_obj *object) {
     for (size_t i = 0; i < state->obj_amount; i++) {
         if (state->objects[i] == object) {
             free(state->objects[i]);
-            remove_element_by_index(state->objects, &state->obj_amount, i);
+            remove_element_by_index((void **)state->objects, &state->obj_amount, i);
             return;
         }
     }
     ERROR("Did not find the object");
+}
+
+void particle_destroy(struct game_state *state, struct particle *particle) {
+    for (size_t i = 0; i < state->particle_amount; i++) {
+        if (state->particles[i] == particle) {
+            free(state->particles[i]);
+            remove_element_by_index((void **)state->particles, &state->particle_amount, i);
+            return;
+        }
+    }
+    ERROR("Did not find the particle");
+}
+
+void particle_step(struct game_state *state, int delta_time) {
+    for (size_t i = 0; i < state->particle_amount; i++) {
+        struct particle *particle = state->particles[i];
+        particle->lifetime -= delta_time;
+        if (particle->lifetime <= 0) {
+            particle_destroy(state, particle);
+        }
+    }
 }
 

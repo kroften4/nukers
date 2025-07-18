@@ -1,7 +1,9 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_render.h>
+#include "krft/engine.h"
 #include "logic.h"
 #include "krft/run_every.h"
 #include "render.h"
@@ -57,27 +59,34 @@ bool update(int delta_time, void *update_args_p) {
     SDL_Event *event = args->event;
     SDL_Renderer *renderer = args->renderer;
     local_state.inputs.lmb = false;
+    local_state.inputs.mmb = false;
+    local_state.inputs.rmb = false;
     while (SDL_PollEvent(event)) {
         switch (event->type) {
         case SDL_EVENT_QUIT:
             return false;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            local_state.inputs.lmb = true;
+            switch (event->button.button) {
+            case SDL_BUTTON_LEFT:
+                local_state.inputs.lmb = true;
+                break;
+            case SDL_BUTTON_MIDDLE:
+                local_state.inputs.mmb = true;
+                break;
+            case SDL_BUTTON_RIGHT:
+                local_state.inputs.rmb = true;
+                break;
+            }
             break;
         }
     }
 
-    SDL_Color bg_color = {255, 255, 255, 255};
-    clear_screen(renderer, bg_color);
-    SDL_Color player_color = {0, 0, 0, 255};
     physics_step(&local_state, delta_time);
     camera->pos = player->pos;
-    for (size_t i = 0; i < local_state.obj_amount; i++) {
-        if ((enum game_obj_tag)local_state.objects[i]->tag == OBJ_CAMERA)
-            continue;
-        draw_game_obj(renderer, *local_state.objects[i], *camera, player_color);
-    }
-    SDL_RenderPresent(renderer);
+
+    particle_step(&local_state, delta_time);
+
+    draw_state(renderer, local_state);
 
     return true;
 }
