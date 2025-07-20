@@ -11,7 +11,7 @@ endif
 
 COMMON_SRC = $(wildcard src/common/*.c)
 COMMON_OBJ = $(patsubst src/common/%.c, build/common/%.o, $(COMMON_SRC))
-LIB_SRC = $(wildcard src/lib/*.c)
+LIB_SRC = $(shell find src/lib/ -name '*.c')
 LIB_OBJ = $(patsubst src/lib/%.c, build/lib/%.o, $(LIB_SRC))
 CLIENT_SRC = $(wildcard src/client/*.c)
 CLIENT_OBJ = $(patsubst src/client/%.c, build/client/%.o, $(CLIENT_SRC))

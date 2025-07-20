@@ -1,9 +1,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
-#include "input.h"
-#include "krft/engine.h"
-#include "krft/vector.h"
+#include "engine/input.h"
+#include "engine/engine.h"
+#include "engine/vector.h"
+#include "engine/game_obj.h"
 #include "render.h"
 
 struct inputs inputs;

@@ -1,75 +1,27 @@
-#include "krft/engine.h"
-#include "krft/log.h"
-#include "krft/vector.h"
+#include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
+#include "engine/engine.h"
+#include "krft/log.h"
 
-struct game_obj linear_move(struct game_obj obj, int delta_time) {
-    struct vector corrected_vel = vector_multiply(obj.velocity, delta_time);
-    obj.pos = vector_add(obj.pos, corrected_vel);
-    return obj;
-}
-
-struct AABB_bounds AABB_get_bounds(struct vector pos, struct vector size) {
-    struct AABB_bounds boundaries = {
-        .up = pos.y + size.y / 2,
-        .down = pos.y - size.y / 2,
-        .left = pos.x - size.x / 2,
-        .right = pos.x + size.x / 2
-    };
-    return boundaries;
-}
-
-struct vector linear_interpolate(struct vector pos, struct vector pos_next,
-                                 float toi) {
-    struct vector pos_interpolated = {0, 0};
-    pos_interpolated.x = toi * (pos_next.x - pos.x) + pos.x;
-    pos_interpolated.y = toi * (pos_next.y - pos.y) + pos.y;
-    return pos_interpolated;
-}
-
-bool is_valid_toi(float toi) {
+static bool is_valid_toi(float toi) {
     return 0.0f < toi && toi <= 1.0f;
 }
 
-bool AABB_is_overlapping(struct game_obj first, struct game_obj second) {
-    struct AABB_bounds bounds1 = AABB_get_bounds(first.pos, first.size);
-    struct AABB_bounds bounds2 = AABB_get_bounds(second.pos, second.size);
-    if (bounds1.down > bounds2.up)
-        return true;
-    if (bounds1.up < bounds2.down)
-        return true;
-    if (bounds1.left > bounds2.right)
-        return true;
-    if (bounds1.right < bounds2.left)
-        return true;
-    return false;
-}
-
-bool get_first_collision(struct coll_info *collisions, size_t amount, struct coll_info *result) {
-    result->toi = 99;
-    for (size_t i = 0; i < amount; i++) {
-        if (is_valid_toi(collisions[i].toi) && collisions[i].toi < result->toi)
-            *result = collisions[i];
-    }
-    return result->toi != 99;
-}
-
-bool AABB_y_overlaps_at_toi(struct AABB_bounds b1, struct AABB_bounds b2,
+static bool AABB_y_overlaps_at_toi(struct AABB_bounds b1, struct AABB_bounds b2,
                             struct vector relative_vel, float toi) {
     b1.up += toi * relative_vel.y;
     b1.down += toi * relative_vel.y;
     return b1.down < b2.up && b1.up > b2.down;
 }
 
-bool AABB_x_overlaps_at_toi(struct AABB_bounds b1, struct AABB_bounds b2,
+static bool AABB_x_overlaps_at_toi(struct AABB_bounds b1, struct AABB_bounds b2,
                             struct vector relative_vel, float toi) {
     b1.left += toi * relative_vel.x;
     b1.right += toi * relative_vel.x;
     return b1.left < b2.right && b1.right > b2.left;
 }
 
-void check_AABB_collision(struct game_obj obj1, struct game_obj obj2,
+static void check_AABB_collision(struct game_obj obj1, struct game_obj obj2,
                           float *result_toi, struct vector *normal1,
                           int delta_time) {
     struct vector relative_vel = vector_subtract(obj1.velocity, obj2.velocity);
@@ -116,7 +68,7 @@ void check_AABB_collision(struct game_obj obj1, struct game_obj obj2,
     *result_toi = toi_min;
 }
 
-void resolve_collision(struct game_state *state, float toi,
+static void resolve_collision(struct game_state *state, float toi,
                        struct game_obj *obj1, struct game_obj *obj2,
                        struct vector normal1) {
     struct coll_info collision1 = {
@@ -135,7 +87,7 @@ void resolve_collision(struct game_state *state, float toi,
         obj2->on_collision(state, obj2, collision2);
 }
 
-void move_state_objects(struct game_state *state, int delta_time, float toi) {
+static void move_state_objects(struct game_state *state, int delta_time, float toi) {
     for (size_t i = 0; i < state->obj_amount; i++) {
         struct game_obj *obj = state->objects[i];
         struct vector corrected_vel = vector_multiply(obj->velocity, delta_time * toi);
@@ -147,7 +99,7 @@ void move_state_objects(struct game_state *state, int delta_time, float toi) {
     }
 }
 
-void physics_tick_notify(struct game_state *state) {
+static void physics_tick_notify(struct game_state *state) {
     for (size_t i = 0; i < state->obj_amount; i++) {
         struct game_obj *obj = state->objects[i];
         if (obj->on_physics_tick != NULL)
@@ -155,22 +107,7 @@ void physics_tick_notify(struct game_state *state) {
     }
 }
 
-void physics_step(struct game_state *state, int delta_time) {
-    physics_tick_notify(state);
-    int cap = 100;
-    int iterations = 0;
-    int passed_time = 0;
-    while (passed_time < delta_time && iterations < cap) {
-        int remaining_time = delta_time - passed_time;
-        passed_time += remaining_time * resolve_first_toi(state, remaining_time);
-        iterations++;
-    }
-    if (iterations == cap) {
-        ERROR("reached 100 collision iterations");
-    }
-}
-
-float resolve_first_toi(struct game_state *state, int delta_time) {
+static float resolve_first_toi(struct game_state *state, int delta_time) {
     float toi_min = 99;
 
     struct collision {
@@ -232,42 +169,18 @@ float resolve_first_toi(struct game_state *state, int delta_time) {
     return toi_min;
 }
 
-void remove_element_by_index(void *objects[], size_t *n, size_t index) {
-    *n -= 1;
-    for (size_t i = index; i < *n; i++) {
-        objects[i] = objects[i + 1];
+void physics_step(struct game_state *state, int delta_time) {
+    physics_tick_notify(state);
+    int cap = 100;
+    int iterations = 0;
+    int passed_time = 0;
+    while (passed_time < delta_time && iterations < cap) {
+        int remaining_time = delta_time - passed_time;
+        passed_time += remaining_time * resolve_first_toi(state, remaining_time);
+        iterations++;
     }
-}
-
-void object_destroy(struct game_state *state, struct game_obj *object) {
-    for (size_t i = 0; i < state->obj_amount; i++) {
-        if (state->objects[i] == object) {
-            free(state->objects[i]);
-            remove_element_by_index((void **)state->objects, &state->obj_amount, i);
-            return;
-        }
-    }
-    ERROR("Did not find the object");
-}
-
-void particle_destroy(struct game_state *state, struct particle *particle) {
-    for (size_t i = 0; i < state->particle_amount; i++) {
-        if (state->particles[i] == particle) {
-            free(state->particles[i]);
-            remove_element_by_index((void **)state->particles, &state->particle_amount, i);
-            return;
-        }
-    }
-    ERROR("Did not find the particle");
-}
-
-void particle_step(struct game_state *state, int delta_time) {
-    for (size_t i = 0; i < state->particle_amount; i++) {
-        struct particle *particle = state->particles[i];
-        particle->lifetime -= delta_time;
-        if (particle->lifetime <= 0) {
-            particle_destroy(state, particle);
-        }
+    if (iterations == cap) {
+        ERROR("reached 100 collision iterations");
     }
 }
 

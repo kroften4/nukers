@@ -1,5 +1,10 @@
 bin/
-.cache/
 build/
 compile_commands.json
+*.o
+
+.*
+!.gitignore
+!.clang-format
+!.editorconfig
 

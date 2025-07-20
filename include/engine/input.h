@@ -1,8 +1,8 @@
 #ifndef _INPUT_H
 #define _INPUT_H
 
-#include "krft/engine.h"
-#include "krft/vector.h"
+#include "engine/vector.h"
+#include "engine/engine.h"
 #include <SDL3/SDL_events.h>
 
 enum direction {

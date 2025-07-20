@@ -1,13 +1,13 @@
-#include "bullet.h"
-#include "input.h"
-#include "player.h"
-#include "krft/engine.h"
-#include "krft/vector.h"
-#include "logic.h"
+#include "logic/bullet.h"
+#include "engine/input.h"
+#include "logic/player.h"
+#include "engine/engine.h"
+#include "engine/vector.h"
+#include "logic/logic.h"
 #include <SDL3/SDL_events.h>
 #include <stdlib.h>
 
-void player_on_collision(struct game_state *state, struct game_obj *self,
+static void player_on_collision(struct game_state *state, struct game_obj *self,
                          struct coll_info collision) {
     (void)state;
     (void)collision;
@@ -20,7 +20,7 @@ void player_on_collision(struct game_state *state, struct game_obj *self,
     }
 }
 
-void player_input_respond(struct game_obj *player) {
+static void player_input_respond(struct game_obj *player) {
     player->velocity.x = get_input_horizontal();
     player->velocity.y = get_input_vertical();
     player->velocity = vector_normalize(player->velocity);
@@ -28,7 +28,7 @@ void player_input_respond(struct game_obj *player) {
                                        player->speed);
 }
 
-void player_shoot(struct game_state *state, struct game_obj player,
+static void player_shoot(struct game_state *state, struct game_obj player,
                   struct game_obj camera) {
     struct vector bullet_dir = get_mouse_direction(player.pos, camera);
     init_bullet(state, player.pos, bullet_dir, 0.5);

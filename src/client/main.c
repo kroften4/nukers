@@ -3,8 +3,10 @@
 #include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_render.h>
-#include "krft/engine.h"
-#include "logic.h"
+#include "engine/engine.h"
+#include "engine/physics.h"
+#include "engine/particle.h"
+#include "logic/logic.h"
 #include "krft/run_every.h"
 #include "render.h"
 

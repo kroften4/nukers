@@ -1,7 +1,7 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
-#include "krft/engine.h"
+#include "engine/engine.h"
 #include <SDL3/SDL_events.h>
 
 void player_respond_to_input(struct game_obj *player, int delta_time);

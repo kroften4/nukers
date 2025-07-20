@@ -1,26 +1,14 @@
-#include "logic.h"
-#include "krft/engine.h"
+#include "logic/logic.h"
+#include "engine/engine.h"
+#include "engine/game_obj.h"
+#include "engine/particle.h"
 #include "krft/log.h"
-#include "logic.h"
-#include "krft/vector.h"
-#include "logic.h"
+#include "engine/vector.h"
 #include <stddef.h>
 #include <stdlib.h>
-#include "bullet.h"
+#include "logic/bullet.h"
 
-void init_explosion_particle(struct game_state *state, enum particle_type type, struct vector pos, struct vector velocity, struct vector size, int lifetime) {
-    struct particle *particle = malloc(sizeof(struct particle));
-
-    particle->type = type;
-    particle->pos = pos;
-    particle->size = size;
-    particle->velocity = velocity;
-    particle->lifetime = lifetime;
-
-    state->particles[state->particle_amount++] = particle;
-}
-
-void bullet_on_collision(struct game_state *state, struct game_obj *bullet, struct coll_info collision) {
+static void bullet_on_collision(struct game_state *state, struct game_obj *bullet, struct coll_info collision) {
     // TODO: if 2 collisions happen in the same tick, this gets run twice.
     // maybe add on_collision_last method?
     if (collision.other.tag != OBJ_WALL)
@@ -31,7 +19,12 @@ void bullet_on_collision(struct game_state *state, struct game_obj *bullet, stru
         float scale = rand() % 20 - 10;
         struct vector size = {scale, scale};
         int lifetime = rand() % 300 + 50;
-        init_explosion_particle(state, PAR_EXPLOSION, pos, VEC_ZERO, size, lifetime);
+	struct particle explosion_particle = { .type = PAR_EXPLOSION,
+					       .lifetime = lifetime,
+					       .size = size,
+					       .pos = pos,
+					       .velocity = VEC_ZERO };
+	add_particle(state, explosion_particle);
     }
     object_destroy(state, bullet);
 }

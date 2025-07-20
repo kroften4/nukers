@@ -1,7 +1,7 @@
 #ifndef _LOGIC_H
 #define _LOGIC_H
 
-#include "krft/engine.h"
+#include "engine/engine.h"
 
 enum game_obj_tag {
     OBJ_CAMERA,

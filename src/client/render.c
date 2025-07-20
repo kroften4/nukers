@@ -1,9 +1,10 @@
 #include <SDL3/SDL.h>
-#include "krft/engine.h"
-#include "logic.h"
+#include "engine/engine.h"
+#include "engine/particle.h"
+#include "logic/logic.h"
 #include "render.h"
 
-void clear_screen(SDL_Renderer *renderer, SDL_Color bg_color) {
+static void clear_screen(SDL_Renderer *renderer, SDL_Color bg_color) {
     SDL_SetRenderDrawColor(renderer, bg_color.r, bg_color.g, bg_color.b, bg_color.a);
     SDL_RenderClear(renderer);
 }
@@ -22,7 +23,7 @@ struct vector screen_to_world_coords(struct vector coords, struct game_obj camer
     return coords;
 }
 
-void draw_AABB(SDL_Renderer *renderer, struct vector pos, struct vector size,
+static void draw_AABB(SDL_Renderer *renderer, struct vector pos, struct vector size,
                    struct game_obj camera, SDL_Color color) {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     struct AABB_bounds bounds = AABB_get_bounds(pos, size);
@@ -59,3 +60,4 @@ void draw_state(SDL_Renderer *renderer, struct game_state state) {
 
     SDL_RenderPresent(renderer);
 }
+

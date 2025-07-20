@@ -2,9 +2,7 @@
 #define _RENDER_H
 
 #include <SDL3/SDL.h>
-#include "krft/engine.h"
-
-void clear_screen(SDL_Renderer *renderer, SDL_Color bg_color);
+#include "engine/engine.h"
 
 struct vector world_to_screen_coords(struct vector coords, struct game_obj camera);
 

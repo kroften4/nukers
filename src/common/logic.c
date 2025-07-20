@@ -1,7 +1,6 @@
-#include "logic.h"
-#include "krft/engine.h"
-#include "krft/vector.h"
-#include "player.h"
+#include "logic/logic.h"
+#include "engine/engine.h"
+#include "logic/player.h"
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -13,7 +12,7 @@ struct game_obj *find_obj_by_tag(struct game_state state, enum game_obj_tag tag)
     return NULL;
 }
 
-void init_camera(struct game_state *state) {
+static void init_camera(struct game_state *state) {
     struct game_obj *camera = malloc(sizeof(struct game_obj));
     camera->on_physics_tick = NULL;
     camera->coll_type = COLL_NONE;
@@ -28,7 +27,7 @@ void init_camera(struct game_state *state) {
     state->objects[state->obj_amount++] = camera;
 }
 
-struct game_obj *init_wall_tile(struct game_state *state, size_t x, size_t y) {
+static struct game_obj *init_wall_tile(struct game_state *state, size_t x, size_t y) {
     struct game_obj *tile = malloc(sizeof(struct game_obj));
     tile->on_physics_tick = NULL;
     tile->coll_type = COLL_STATIC;
@@ -45,7 +44,7 @@ struct game_obj *init_wall_tile(struct game_state *state, size_t x, size_t y) {
     return tile;
 }
 
-void init_walls(struct game_state *state) {
+static void init_walls(struct game_state *state) {
     bool walls[10][10] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
