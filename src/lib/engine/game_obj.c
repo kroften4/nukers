@@ -16,8 +16,8 @@ void object_destroy(struct game_state *state, struct game_obj *object)
 	for (size_t i = 0; i < state->obj_amount; i++) {
 		if (state->objects[i] == object) {
 			free(state->objects[i]);
-			remove_element_by_index((void **)state->objects,
-						&state->obj_amount, i);
+			remove_swapback((void **)state->objects,
+					&state->obj_amount, i);
 			return;
 		}
 	}

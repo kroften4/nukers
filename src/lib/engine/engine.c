@@ -1,11 +1,5 @@
 #include "engine/engine.h"
-#include "engine/game_obj.h"
-#include "engine/input.h"
-#include "krft/log.h"
 #include "engine/vector.h"
-#include <stddef.h>
-#include <stdlib.h>
-#include "utility.h"
 
 struct AABB_bounds AABB_get_bounds(struct vector pos, struct vector size) {
     struct AABB_bounds boundaries = {

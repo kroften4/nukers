@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Iinclude
+CFLAGS = -std=gnu23 -Iinclude
 CFLAGS += -Wall -Wextra -Wpedantic
 LFLAGS = -lSDL3 -lm
 
@@ -17,10 +17,12 @@ CLIENT_SRC = $(wildcard src/client/*.c)
 CLIENT_OBJ = $(patsubst src/client/%.c, build/client/%.o, $(CLIENT_SRC))
 SERVER_SRC = $(wildcard src/server/*.c)
 SERVER_OBJ = $(patsubst src/server/%.c, build/server/%.o, $(SERVER_SRC))
+TEST_SRC = $(wildcard test/*.c)
+TEST_OBJ = $(patsubst test/%.c, build/test/%.o, $(TEST_SRC))
 
 .PHONY: all clean
 
-all: bin/server bin/client bin/test
+all: bin/client bin/test
 
 build/lib/%.o: src/lib/%.c
 	@mkdir -p $(@D)
@@ -38,6 +40,10 @@ build/client/%.o: src/client/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+build/test/%.o: test/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 bin/server: $(LIB_OBJ) $(COMMON_OBJ) $(SERVER_OBJ)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
@@ -46,9 +52,9 @@ bin/client: $(LIB_OBJ) $(COMMON_OBJ) $(CLIENT_OBJ)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-bin/test: $(LIB_OBJ)
+bin/test: $(TEST_OBJ)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $^ test/binarr.c -o $@ $(LFLAGS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 clean:
 	rm -r bin/* build/*

@@ -73,4 +73,3 @@ void init_game(struct game_state *state) {
     init_camera(state);
     init_walls(state);
 }
-
