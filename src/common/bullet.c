@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "logic/bullet.h"
 
-static void bullet_on_collision(struct game_state *state, struct game_obj *bullet, struct coll_info collision) {
+static void bullet_on_collision(struct game_state *state, struct game_obj *bullet, struct collision collision) {
     // TODO: if 2 collisions happen in the same tick, this gets run twice.
     // maybe add on_collision_last method?
     if (collision.other.tag != OBJ_WALL)

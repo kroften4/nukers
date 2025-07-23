@@ -23,14 +23,16 @@ void darray_test(void)
 	int_darray_push(&array, 3);
 	int_darray_push(&array, 4);
 	int_darray_push(&array, 5);
+	assert(array.size == 5);
+	int_darray_remove_swapback(&array, 2);
+	assert(array.size == 4);
 	int_darray_push(&array, 6);
+	assert(array.size == 5);
 	assert(array.array[0] == 1);
 	assert(array.array[1] == 2);
-	assert(array.array[2] == 3);
+	assert(array.array[2] == 5);
 	assert(array.array[3] == 4);
-	assert(array.array[4] == 5);
-	assert(array.array[5] == 6);
-	assert(array.size == 6);
+	assert(array.array[4] == 6);
 	assert(array.capacity == 8);
 	puts("tests for int_darray passed");
 

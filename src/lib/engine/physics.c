@@ -24,7 +24,7 @@ static bool AABB_x_overlaps_at_toi(struct AABB_bounds b1, struct AABB_bounds b2,
 	return b1.left < b2.right && b1.right > b2.left;
 }
 
-static void check_AABB_collision(struct game_obj obj1, struct game_obj obj2,
+static void check_AABB_collision(entity_id_t obj1, entity_id_t obj2,
 				 float *result_toi, struct vector *normal1,
 				 int delta_time)
 {
@@ -79,7 +79,7 @@ static void add_collision(struct game_state *state, float toi,
 			  struct game_obj *obj1, struct game_obj *obj2,
 			  struct vector normal1)
 {
-	struct coll_info collision = { .toi = toi,
+	struct collision collision = { .toi = toi,
 				       .normal1 = normal1,
 				       .normal2 = vector_multiply(normal1, -1),
 				       .obj1 = *obj1,

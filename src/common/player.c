@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 static void player_on_collision(struct game_state *state, struct game_obj *self,
-                         struct coll_info collision) {
+                         struct collision collision) {
     (void)state;
     (void)collision;
     if (vector_dot(self->velocity, collision.normal) < 0) {
