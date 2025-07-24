@@ -24,11 +24,12 @@ short get_input_horizontal(void)
 	return right - left;
 }
 
-struct vector get_mouse_direction(struct vector pos, struct game_obj camera)
+struct vector get_mouse_direction(struct game_state *state, struct vector pos,
+				  entity_id_t camera)
 {
 	struct vector mouse_pos = { 0, 0 };
 	SDL_GetMouseState(&mouse_pos.x, &mouse_pos.y);
-	mouse_pos = screen_to_world_coords(mouse_pos, camera);
+	mouse_pos = screen_to_world_coords(state, mouse_pos, camera);
 	return vector_subtract(mouse_pos, pos);
 }
 

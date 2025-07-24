@@ -11,7 +11,8 @@ short get_input_vertical(void);
 
 short get_input_horizontal(void);
 
-struct vector get_mouse_direction(struct vector pos, struct game_obj camera);
+struct vector get_mouse_direction(struct game_state *state, struct vector pos,
+				  entity_id_t camera);
 
 void handle_input(struct game_state *state, SDL_Event *event);
 

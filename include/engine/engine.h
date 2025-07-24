@@ -14,7 +14,6 @@ struct inputs {
 };
 
 struct game_state;
-struct game_obj;
 struct collision;
 
 typedef int entity_id_t;
@@ -27,41 +26,51 @@ struct collision {
 	float toi;
 };
 
-#define SDARRAY_T struct collision
-#define SDARRAY_PREFIX collision
-#include "krft/sdarray.h"
+#define DARRAY_T struct collision
+#define DARRAY_PREFIX collision
+#include "krft/darray.h"
 
 struct transform {
 	struct vector pos;
-	entity_id_t entity_id;
 };
 
 #define SDARRAY_T struct transform
 #define SDARRAY_PREFIX transform
 #include "krft/sdarray.h"
 
-struct linear_movement {
-	struct vector velocity;
-	entity_id_t entity_id;
+struct velocity {
+	struct vector v;
 };
 
-#define SDARRAY_T struct linear_movement
-#define SDARRAY_PREFIX linear_movement
+#define SDARRAY_T struct velocity
+#define SDARRAY_PREFIX velocity
 #include "krft/sdarray.h"
 
 struct aabb_sprite {
 	struct vector size;
 	SDL_Color color;
-	entity_id_t entity_id;
 };
 
 #define SDARRAY_T struct aabb_sprite
 #define SDARRAY_PREFIX aabb_sprite
 #include "krft/sdarray.h"
 
+enum collision_type
+#if __STDC_VERSION__ >= 202300L
+	: bool
+#endif
+{
+	COLL_DYNAMIC,
+	COLL_STATIC
+};
+
+typedef void (*on_collision_t)(struct game_state *state, struct vector normal,
+			       entity_id_t other);
+
 struct aabb_collider {
 	struct vector size;
-	entity_id_t entity_id;
+	on_collision_t on_collision;
+	enum collision_type type;
 };
 
 #define SDARRAY_T struct aabb_collider
@@ -70,7 +79,6 @@ struct aabb_collider {
 
 struct temporary {
 	size_t time_left;
-	entity_id_t entity_id;
 };
 
 #define SDARRAY_T struct temporary
@@ -81,14 +89,27 @@ struct temporary {
 struct game_state {
 	struct inputs inputs;
 	transform_sdarray transforms;
-	linear_movement_sdarray linear_movables;
-	aabb_collider_sdarray static_colliders;
-	aabb_collider_sdarray dynamic_colliders;
-	aabb_sprite_sdarray aabb_renderables;
-	collision_sdarray collisions;
+	velocity_sdarray velocities;
+	aabb_collider_sdarray colliders;
+	aabb_sprite_sdarray aabb_sprites;
 	temporary_sdarray temporaries;
+	collision_darray collisions;
 	bool running;
 };
+
+enum component {
+	COMP_TRANSFORM,
+	COMP_VELOCITY,
+	COMP_COLLIDER,
+	COMP_AABB_SPRITE,
+	COMP_TEMPORARY
+};
+
+void *get_component(struct game_state *state, entity_id_t entity,
+		    enum component type);
+
+bool has_component(struct game_state *state, entity_id_t entity,
+		   enum component type);
 
 struct AABB_bounds {
 	float up;

@@ -50,10 +50,10 @@ _SDARRAY_PREFIX(_sdarray_extend_sparse)(_SDARRAY_PREFIX(_sdarray) *sdarray)
 				  sizeof(size_t) * sdarray->capacity_sparse);
 }
 
-static inline SDARRAY_T
+static inline SDARRAY_T *
 _SDARRAY_PREFIX(_sdarray_get)(_SDARRAY_PREFIX(_sdarray) *sdarray, size_t index)
 {
-	return sdarray->dense[sdarray->sparse[index]];
+	return &(sdarray->dense[sdarray->sparse[index]]);
 }
 
 static inline void
@@ -80,9 +80,10 @@ static inline void
 _SDARRAY_PREFIX(_sdarray_remove)(_SDARRAY_PREFIX(_sdarray) *sdarray,
 				 size_t index)
 {
-	SDARRAY_T last =
+	SDARRAY_T *last =
 		_SDARRAY_PREFIX(_sdarray_get)(sdarray, sdarray->size_dense - 1);
-	_SDARRAY_PREFIX(_sdarray_set)(sdarray, index, last);
+	_SDARRAY_PREFIX(_sdarray_set)(sdarray, index, *last);
+	sdarray->sparse[index] = (size_t)-1;
 }
 
 #undef SDARRAY_T
