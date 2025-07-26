@@ -64,7 +64,7 @@ _SDARRAY_PREFIX(_sdarray_set)(_SDARRAY_PREFIX(_sdarray) *sdarray, size_t index,
 }
 
 static inline
-void _SDARRAY_PREFIX(_sdarray_push)(_SDARRAY_PREFIX(_sdarray) *sdarray,
+size_t _SDARRAY_PREFIX(_sdarray_push)(_SDARRAY_PREFIX(_sdarray) *sdarray,
 				    SDARRAY_T element)
 {
 	if (sdarray->size_dense == sdarray->capacity_dense)
@@ -72,8 +72,9 @@ void _SDARRAY_PREFIX(_sdarray_push)(_SDARRAY_PREFIX(_sdarray) *sdarray,
 	sdarray->dense[sdarray->size_dense] = element;
 	if (sdarray->size_sparse == sdarray->capacity_sparse)
 		_SDARRAY_PREFIX(_sdarray_extend_sparse)(sdarray);
-	sdarray->sparse[sdarray->size_sparse++] = sdarray->size_dense;
+	sdarray->sparse[sdarray->size_sparse] = sdarray->size_dense;
 	sdarray->size_dense++;
+	return sdarray->size_sparse++;
 }
 
 static inline void

@@ -3,10 +3,9 @@
 #include "logic/player.h"
 #include "engine/engine.h"
 #include "engine/vector.h"
-#include "logic/logic.h"
+#include "global.h"
 #include <SDL3/SDL_events.h>
-
-#define PLAYER_SPEED 0.5
+#include <SDL3/SDL_pixels.h>
 
 static void player_on_collision(struct game_state *state, struct vector normal,
 				entity_id_t self, entity_id_t other)
@@ -28,41 +27,41 @@ static void player_input_respond(struct game_state *state, entity_id_t self)
 	vel->v.x = get_input_horizontal();
 	vel->v.y = get_input_vertical();
 	vel->v = vector_normalize(vel->v);
-	vel->v = vector_multiply(vel->v, PLAYER_SPEED);
+	vel->v = vector_multiply(vel->v, global.player.speed);
 }
 
-static void player_shoot(struct game_state *state, entity_id_t self,
-			 entity_id_t camera)
+static void player_shoot(struct game_state *state, entity_id_t self)
 {
 	struct transform *player_pos =
 		get_component(state, self, COMP_TRANSFORM);
 	struct vector bullet_dir =
-		get_mouse_direction(state, player_pos->pos, camera);
+		get_mouse_direction(state, player_pos->pos, global.camera);
 	init_bullet(state, player_pos->pos, bullet_dir, 0.5);
 }
 
-void player_update(struct game_state *state, entity_id_t player)
+void player_update(struct game_state *state, entity_id_t self, int delta_time)
 {
-	struct game_obj *camera = find_obj_by_tag(*state, OBJ_CAMERA);
-	player_input_respond(player);
+	(void)delta_time;
+	player_input_respond(state, self);
 	if (state->inputs.lmb)
-		player_shoot(state, *player, *camera);
+		player_shoot(state, self);
 }
 
 void init_player(struct game_state *state)
 {
-	struct game_obj *player = malloc(sizeof(struct game_obj));
-	player->on_collision = player_on_collision;
-	player->on_physics_tick = player_update;
-	player->coll_type = COLL_DYNAMIC;
-	player->tag = OBJ_PLAYER;
-	player->pos.x = 200;
-	player->pos.y = 200;
-
-	player->size.x = 20;
-	player->size.y = 20;
-
-	player->speed = 0.5;
-
-	state->objects[state->obj_amount++] = player;
+	struct transform transform = { .pos = { 200, 200 } };
+	entity_id_t id = transform_sdarray_push(&state->transforms, transform);
+	global.player.id = id;
+	struct vector size = { 20, 20 };
+	struct aabb_sprite sprite = { .size = size, .color = cs_orange };
+	aabb_sprite_sdarray_push(&state->aabb_sprites, sprite);
+	struct aabb_collider collider = { .size = size,
+					  .on_collision = player_on_collision,
+					  .type = COLL_DYNAMIC };
+	aabb_collider_sdarray_push(&state->colliders, collider);
+	struct velocity vel = { .v = { 0, 0 },
+				.on_physics = player_update,
+				.on_physics_end = NULL };
+	velocity_sdarray_push(&state->velocities, vel);
+	global.player.speed = 0.5;
 }

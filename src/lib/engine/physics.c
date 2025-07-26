@@ -34,8 +34,10 @@ static void check_AABB_collision(struct game_state *state, entity_id_t obj1,
 	struct velocity vel2 = *velocity_sdarray_get(&state->velocities, obj2);
 	struct vector relative_vel = vector_subtract(vel1.v, vel2.v);
 	relative_vel = vector_multiply(relative_vel, delta_time);
-	struct transform pos1 = *transform_sdarray_get(&state->transforms, obj1);
-	struct transform pos2 = *transform_sdarray_get(&state->transforms, obj2);
+	struct transform pos1 =
+		*transform_sdarray_get(&state->transforms, obj1);
+	struct transform pos2 =
+		*transform_sdarray_get(&state->transforms, obj2);
 	struct aabb_collider size1 =
 		*aabb_collider_sdarray_get(&state->colliders, obj1);
 	struct aabb_collider size2 =
@@ -131,10 +133,10 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 			entity_id_t obj2 = j;
 			struct aabb_collider collider1 =
 				*aabb_collider_sdarray_get(&state->colliders,
-							  obj1);
+							   obj1);
 			struct aabb_collider collider2 =
 				*aabb_collider_sdarray_get(&state->colliders,
-							  obj2);
+							   obj2);
 			if (collider1.type == COLL_STATIC &&
 			    collider2.type == COLL_STATIC)
 				continue;
@@ -179,12 +181,31 @@ void resolve_collision(struct game_state *state, struct collision collision)
 	collider2.on_collision(state, collision.normal2, collision.obj1);
 }
 
-void physics_step(struct game_state *state, int delta_time,
-		  on_physics_step_t on_physics_step,
-		  on_physics_end_t on_physics_end)
+void notify_on_physics(struct game_state *state, int delta_time)
 {
-	if (on_physics_step != NULL)
-		on_physics_step(state, delta_time);
+	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
+		if (!has_component(state, e, COMP_VELOCITY))
+			continue;
+		struct velocity *physics_comp = get_component(state, e, COMP_VELOCITY);
+		if (physics_comp->on_physics != NULL)
+			physics_comp->on_physics(state, e, delta_time);
+	}
+}
+
+void notify_on_physics_end(struct game_state *state, int delta_time)
+{
+	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
+		if (!has_component(state, e, COMP_VELOCITY))
+			continue;
+		struct velocity *physics_comp = get_component(state, e, COMP_VELOCITY);
+		if (physics_comp->on_physics_end != NULL)
+			physics_comp->on_physics_end(state, e, delta_time);
+	}
+}
+
+void physics_step(struct game_state *state, int delta_time)
+{
+	notify_on_physics(state, delta_time);
 	int cap = 100;
 	int iterations = 0;
 	int passed_time = 0;
@@ -200,6 +221,5 @@ void physics_step(struct game_state *state, int delta_time,
 	}
 	if (iterations == cap)
 		ERROR("reached 100 collision iterations");
-	if (on_physics_end != NULL)
-		on_physics_end(state, delta_time);
+	notify_on_physics_end(state, delta_time);
 }

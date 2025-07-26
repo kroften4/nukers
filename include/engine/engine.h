@@ -38,8 +38,13 @@ struct transform {
 #define SDARRAY_PREFIX transform
 #include "krft/sdarray.h"
 
+typedef void (*on_physics_t)(struct game_state *state, entity_id_t self,
+			     int delta_time);
+
 struct velocity {
 	struct vector v;
+	on_physics_t on_physics;
+	on_physics_t on_physics_end;
 };
 
 #define SDARRAY_T struct velocity
@@ -65,7 +70,7 @@ enum collision_type
 };
 
 typedef void (*on_collision_t)(struct game_state *state, struct vector normal,
-			       entity_id_t other);
+			       entity_id_t self, entity_id_t other);
 
 struct aabb_collider {
 	struct vector size;

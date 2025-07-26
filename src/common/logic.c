@@ -4,14 +4,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-struct game_obj *find_obj_by_tag(struct game_state state, enum game_obj_tag tag) {
-    for (size_t i = 0; i < state.obj_amount; i++) {
-        if ((enum game_obj_tag)state.objects[i]->tag == tag)
-            return state.objects[i];
-    }
-    return NULL;
-}
-
 static void init_camera(struct game_state *state) {
     struct game_obj *camera = malloc(sizeof(struct game_obj));
     camera->on_physics_tick = NULL;
