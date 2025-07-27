@@ -123,6 +123,11 @@ struct AABB_bounds {
 	float right;
 };
 
+entity_id_t add_entity(struct game_state *state);
+
+void add_component(struct game_state *state, entity_id_t entity,
+		   enum component type, void *component_data);
+
 struct AABB_bounds AABB_get_bounds(struct vector pos, struct vector size);
 
 #endif

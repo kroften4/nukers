@@ -175,10 +175,10 @@ void resolve_collision(struct game_state *state, struct collision collision)
 {
 	struct aabb_collider collider1 =
 		*aabb_collider_sdarray_get(&state->colliders, collision.obj1);
-	collider1.on_collision(state, collision.normal1, collision.obj2);
+	collider1.on_collision(state, collision.normal1, collision.obj1, collision.obj2);
 	struct aabb_collider collider2 =
 		*aabb_collider_sdarray_get(&state->colliders, collision.obj2);
-	collider2.on_collision(state, collision.normal2, collision.obj1);
+	collider2.on_collision(state, collision.normal2, collision.obj2, collision.obj1);
 }
 
 void notify_on_physics(struct game_state *state, int delta_time)

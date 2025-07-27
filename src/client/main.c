@@ -12,8 +12,6 @@
 #define MIN_FRAME_DURATION_MS 1000 / FPS_CAP
 
 static struct game_state local_state;
-static struct game_obj *player;
-static struct game_obj *camera;
 
 struct update_args {
 	SDL_Event *event;
@@ -38,8 +36,6 @@ int main(int argc, char **argv)
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
 	init_game(&local_state);
-	player = find_obj_by_tag(local_state, OBJ_PLAYER);
-	camera = find_obj_by_tag(local_state, OBJ_CAMERA);
 
 	struct update_args update_args = { .event = &event,
 					   .renderer = renderer };

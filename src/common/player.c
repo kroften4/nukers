@@ -49,19 +49,20 @@ void player_update(struct game_state *state, entity_id_t self, int delta_time)
 
 void init_player(struct game_state *state)
 {
+	entity_id_t player = add_entity(state);
 	struct transform transform = { .pos = { 200, 200 } };
-	entity_id_t id = transform_sdarray_push(&state->transforms, transform);
-	global.player.id = id;
+	add_component(state, player, COMP_TRANSFORM, &transform);
+	global.player.id = player;
 	struct vector size = { 20, 20 };
 	struct aabb_sprite sprite = { .size = size, .color = cs_orange };
-	aabb_sprite_sdarray_push(&state->aabb_sprites, sprite);
+	add_component(state, player, COMP_AABB_SPRITE, &sprite);
 	struct aabb_collider collider = { .size = size,
 					  .on_collision = player_on_collision,
 					  .type = COLL_DYNAMIC };
-	aabb_collider_sdarray_push(&state->colliders, collider);
+	add_component(state, player, COMP_COLLIDER, &collider);
 	struct velocity vel = { .v = { 0, 0 },
 				.on_physics = player_update,
 				.on_physics_end = NULL };
-	velocity_sdarray_push(&state->velocities, vel);
+	add_component(state, player, COMP_VELOCITY, &vel);
 	global.player.speed = 0.5;
 }
