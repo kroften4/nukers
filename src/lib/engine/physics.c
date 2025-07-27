@@ -153,11 +153,8 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 			if (toi == toi_min)
 				add_collision(state, toi, obj1, obj2, normal);
 			if (toi < toi_min) {
-				state->collisions.size = 1;
-				state->collisions.array[0].normal1 = normal;
-				state->collisions.array[0].toi = toi;
-				state->collisions.array[0].obj1 = obj1;
-				state->collisions.array[0].obj2 = obj2;
+				state->collisions.size = 0;
+				add_collision(state, toi, obj1, obj2, normal);
 				toi_min = toi;
 			}
 		}
@@ -175,10 +172,14 @@ void resolve_collision(struct game_state *state, struct collision collision)
 {
 	struct aabb_collider collider1 =
 		*aabb_collider_sdarray_get(&state->colliders, collision.obj1);
-	collider1.on_collision(state, collision.normal1, collision.obj1, collision.obj2);
+	if (collider1.on_collision != NULL)
+		collider1.on_collision(state, collision.normal1, collision.obj1,
+				       collision.obj2);
 	struct aabb_collider collider2 =
 		*aabb_collider_sdarray_get(&state->colliders, collision.obj2);
-	collider2.on_collision(state, collision.normal2, collision.obj2, collision.obj1);
+	if (collider2.on_collision != NULL)
+		collider2.on_collision(state, collision.normal2, collision.obj2,
+				       collision.obj1);
 }
 
 void notify_on_physics(struct game_state *state, int delta_time)
@@ -186,7 +187,8 @@ void notify_on_physics(struct game_state *state, int delta_time)
 	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
 		if (!has_component(state, e, COMP_VELOCITY))
 			continue;
-		struct velocity *physics_comp = get_component(state, e, COMP_VELOCITY);
+		struct velocity *physics_comp =
+			get_component(state, e, COMP_VELOCITY);
 		if (physics_comp->on_physics != NULL)
 			physics_comp->on_physics(state, e, delta_time);
 	}
@@ -197,7 +199,8 @@ void notify_on_physics_end(struct game_state *state, int delta_time)
 	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
 		if (!has_component(state, e, COMP_VELOCITY))
 			continue;
-		struct velocity *physics_comp = get_component(state, e, COMP_VELOCITY);
+		struct velocity *physics_comp =
+			get_component(state, e, COMP_VELOCITY);
 		if (physics_comp->on_physics_end != NULL)
 			physics_comp->on_physics_end(state, e, delta_time);
 	}

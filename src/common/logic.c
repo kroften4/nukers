@@ -9,10 +9,10 @@ static void camera_follow(struct game_state *state, entity_id_t self,
 			  int delta_time)
 {
 	(void)delta_time;
-	struct velocity *player_vel =
-		get_component(state, global.player.id, COMP_VELOCITY);
-	struct velocity *camera_vel = get_component(state, self, COMP_VELOCITY);
-	camera_vel->v = player_vel->v;
+	struct transform *player_tf =
+		get_component(state, global.player.id, COMP_TRANSFORM);
+	struct transform *camera_tf = get_component(state, self, COMP_TRANSFORM);
+	camera_tf->pos = player_tf->pos;
 }
 
 static void init_camera(struct game_state *state)
@@ -73,6 +73,7 @@ static void init_walls(struct game_state *state)
 
 void init_game(struct game_state *state)
 {
+	state->running = true;
 	init_camera(state);
 	init_player(state);
 	init_walls(state);

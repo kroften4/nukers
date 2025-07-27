@@ -60,6 +60,11 @@ static inline void
 _SDARRAY_PREFIX(_sdarray_set)(_SDARRAY_PREFIX(_sdarray) *sdarray, size_t index,
 			      SDARRAY_T item)
 {
+	if (sdarray->sparse[index] == (size_t)-1) {
+		if (sdarray->size_dense == sdarray->capacity_dense)
+			_SDARRAY_PREFIX(_sdarray_extend_dense)(sdarray);
+		sdarray->sparse[index] = sdarray->size_dense++;
+	}
 	sdarray->dense[sdarray->sparse[index]] = item;
 }
 

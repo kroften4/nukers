@@ -16,6 +16,7 @@ void *get_component(struct game_state *state, entity_id_t entity,
 	case COMP_TEMPORARY:
 		return temporary_sdarray_get(&state->temporaries, entity);
 	}
+	return NULL;
 }
 
 bool has_component(struct game_state *state, entity_id_t entity,
@@ -33,6 +34,7 @@ bool has_component(struct game_state *state, entity_id_t entity,
 	case COMP_TEMPORARY:
 		return state->temporaries.sparse[entity] != (size_t)(-1);
 	}
+	return NULL;
 }
 
 entity_id_t add_entity(struct game_state *state)

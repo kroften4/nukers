@@ -4,26 +4,26 @@
 #include <SDL3/SDL_pixels.h>
 #include <engine/engine.h>
 
-static SDL_Color cs_transparent = { 0, 0, 0, 0 };
+extern SDL_Color cs_transparent;
 // Pico 8 color scheme https://pico-8.fandom.com/wiki/Palette
-static SDL_Color cs_black = { 0, 0, 0, 255 };
-static SDL_Color cs_dark_blue = { 29, 43, 83, 255 };
-static SDL_Color cs_dark_purple = { 126, 37, 83, 255 };
-static SDL_Color cs_dark_green = { 0, 135, 81, 255 };
-static SDL_Color cs_brown = { 171, 82, 54, 255 };
-static SDL_Color cs_dark_gray = { 95, 87, 79, 255 };
-static SDL_Color cs_light_gray = { 194, 195, 199, 255 };
-static SDL_Color cs_white = { 255, 241, 232, 255 };
-static SDL_Color cs_red = { 255, 0, 77, 255 };
-static SDL_Color cs_orange = { 255, 163, 0, 255 };
-static SDL_Color cs_yellow = { 255, 236, 39, 255 };
-static SDL_Color cs_green = { 0, 228, 54, 255 };
-static SDL_Color cs_blue = { 41, 173, 255, 255 };
-static SDL_Color cs_lavender = { 131, 118, 156, 255 };
-static SDL_Color cs_pink = { 255, 119, 168, 255 };
-static SDL_Color cs_light_peach = { 255, 204, 170, 255 };
+extern SDL_Color cs_black;
+extern SDL_Color cs_dark_blue;
+extern SDL_Color cs_dark_purple;
+extern SDL_Color cs_dark_green;
+extern SDL_Color cs_brown;
+extern SDL_Color cs_dark_gray;
+extern SDL_Color cs_light_gray;
+extern SDL_Color cs_white;
+extern SDL_Color cs_red;
+extern SDL_Color cs_orange;
+extern SDL_Color cs_yellow;
+extern SDL_Color cs_green;
+extern SDL_Color cs_blue;
+extern SDL_Color cs_lavender;
+extern SDL_Color cs_pink;
+extern SDL_Color cs_light_peach;
 
-static struct global {
+extern struct global {
 	struct {
 		entity_id_t id;
 		float speed;
