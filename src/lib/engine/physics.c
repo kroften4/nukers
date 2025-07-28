@@ -134,10 +134,10 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 	state->collisions.size = 0;
 
 	for (size_t i = 0; i < state->colliders.size_sparse - 1; i++) {
-		if (i == (size_t)-1)
+		if (state->colliders.sparse[i] == (size_t)-1)
 			continue;
 		for (size_t j = i + 1; j < state->colliders.size_sparse; j++) {
-			if (j == (size_t)-1)
+			if (state->colliders.sparse[j] == (size_t)-1)
 				continue;
 			entity_id_t obj1 = i;
 			entity_id_t obj2 = j;

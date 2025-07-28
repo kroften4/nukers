@@ -27,6 +27,8 @@ static void bullet_on_collision(struct game_state *state, struct vector normal,
 {
 	(void)normal;
 	(void)other;
+	if (state->transforms.sparse[self] == (size_t)-1)
+		return;
 
 	// TODO: if 2 collisions happen in the same tick, this gets run twice.
 	// maybe add on_collision_last method?
@@ -37,7 +39,7 @@ static void bullet_on_collision(struct game_state *state, struct vector normal,
 	for (int i = 0; i < 25; i++) {
 		init_explosion_particle(state, explosion_center);
 	}
-	// FIXME: object_destroy(state, bullet);
+	remove_entity(state, self);
 }
 
 void init_bullet(struct game_state *state, struct vector start_pos,

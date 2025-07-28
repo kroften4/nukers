@@ -64,5 +64,5 @@ void init_player(struct game_state *state)
 				.on_physics = player_update,
 				.on_physics_end = NULL };
 	add_component(state, player, COMP_VELOCITY, &vel);
-	global.player.speed = 0.5;
+	global.player.speed = 0.25;
 }

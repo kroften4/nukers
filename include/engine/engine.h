@@ -125,6 +125,8 @@ struct AABB_bounds {
 
 entity_id_t add_entity(struct game_state *state);
 
+void remove_entity(struct game_state *state, entity_id_t entity);
+
 void add_component(struct game_state *state, entity_id_t entity,
 		   enum component type, void *component_data);
 

@@ -1,3 +1,6 @@
+#include "krft/log.h"
+#include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #ifndef SDARRAY_T
@@ -16,28 +19,34 @@
 typedef struct _SDARRAY_PREFIX(_sdarray) {
 	SDARRAY_T *dense;
 	size_t *sparse;
+	size_t *dense_to_sparse;
 	size_t size_dense;
 	size_t capacity_dense;
 	size_t size_sparse;
 	size_t capacity_sparse;
 } _SDARRAY_PREFIX(_sdarray);
 
-static inline
-void _SDARRAY_PREFIX(_sdarray_extend_dense)(_SDARRAY_PREFIX(_sdarray) *sdarray)
+static inline void
+_SDARRAY_PREFIX(_sdarray_extend_dense)(_SDARRAY_PREFIX(_sdarray) * sdarray)
 {
 	if (sdarray->capacity_dense == 0) {
 		sdarray->capacity_dense = 1;
 		sdarray->dense =
+			malloc(sizeof(SDARRAY_T) * sdarray->capacity_dense);
+		sdarray->dense_to_sparse =
 			malloc(sizeof(SDARRAY_T) * sdarray->capacity_dense);
 		return;
 	}
 	sdarray->capacity_dense *= 2;
 	sdarray->dense = realloc(sdarray->dense,
 				 sizeof(SDARRAY_T) * sdarray->capacity_dense);
+	sdarray->dense_to_sparse =
+		realloc(sdarray->dense_to_sparse,
+			sizeof(SDARRAY_T) * sdarray->capacity_dense);
 }
 
 static inline void
-_SDARRAY_PREFIX(_sdarray_extend_sparse)(_SDARRAY_PREFIX(_sdarray) *sdarray)
+_SDARRAY_PREFIX(_sdarray_extend_sparse)(_SDARRAY_PREFIX(_sdarray) * sdarray)
 {
 	if (sdarray->capacity_sparse == 0) {
 		sdarray->capacity_sparse = 1;
@@ -51,26 +60,28 @@ _SDARRAY_PREFIX(_sdarray_extend_sparse)(_SDARRAY_PREFIX(_sdarray) *sdarray)
 }
 
 static inline SDARRAY_T *
-_SDARRAY_PREFIX(_sdarray_get)(_SDARRAY_PREFIX(_sdarray) *sdarray, size_t index)
+_SDARRAY_PREFIX(_sdarray_get)(_SDARRAY_PREFIX(_sdarray) * sdarray, size_t index)
 {
 	return &(sdarray->dense[sdarray->sparse[index]]);
 }
 
-static inline void
-_SDARRAY_PREFIX(_sdarray_set)(_SDARRAY_PREFIX(_sdarray) *sdarray, size_t index,
-			      SDARRAY_T item)
+static inline void _SDARRAY_PREFIX(_sdarray_set)(_SDARRAY_PREFIX(_sdarray) *
+							 sdarray,
+						 size_t index, SDARRAY_T item)
 {
 	if (sdarray->sparse[index] == (size_t)-1) {
 		if (sdarray->size_dense == sdarray->capacity_dense)
 			_SDARRAY_PREFIX(_sdarray_extend_dense)(sdarray);
-		sdarray->sparse[index] = sdarray->size_dense++;
+		sdarray->sparse[index] = sdarray->size_dense;
+		sdarray->dense_to_sparse[sdarray->size_dense] = index;
+		sdarray->size_dense++;
 	}
 	sdarray->dense[sdarray->sparse[index]] = item;
 }
 
-static inline
-size_t _SDARRAY_PREFIX(_sdarray_push)(_SDARRAY_PREFIX(_sdarray) *sdarray,
-				    SDARRAY_T element)
+static inline size_t _SDARRAY_PREFIX(_sdarray_push)(_SDARRAY_PREFIX(_sdarray) *
+							    sdarray,
+						    SDARRAY_T element)
 {
 	if (sdarray->size_dense == sdarray->capacity_dense)
 		_SDARRAY_PREFIX(_sdarray_extend_dense)(sdarray);
@@ -78,23 +89,70 @@ size_t _SDARRAY_PREFIX(_sdarray_push)(_SDARRAY_PREFIX(_sdarray) *sdarray,
 	if (sdarray->size_sparse == sdarray->capacity_sparse)
 		_SDARRAY_PREFIX(_sdarray_extend_sparse)(sdarray);
 	sdarray->sparse[sdarray->size_sparse] = sdarray->size_dense;
+	sdarray->dense_to_sparse[sdarray->size_dense] = sdarray->size_sparse;
 	sdarray->size_dense++;
 	return sdarray->size_sparse++;
 }
 
-static inline void
-_SDARRAY_PREFIX(_sdarray_remove)(_SDARRAY_PREFIX(_sdarray) *sdarray,
-				 size_t index)
+static inline void _SDARRAY_PREFIX(_sdarray_remove)(_SDARRAY_PREFIX(_sdarray) *
+							    sdarray,
+						    size_t index)
 {
-	SDARRAY_T *last =
-		_SDARRAY_PREFIX(_sdarray_get)(sdarray, sdarray->size_dense - 1);
-	_SDARRAY_PREFIX(_sdarray_set)(sdarray, index, *last);
-	sdarray->size_dense--;
+	LOG("");
+	printf("dense before: (%zu)\n", sdarray->size_dense);
+	for (size_t i = 0; i < sdarray->size_dense; i++) {
+		size_t element = sdarray->dense_to_sparse[i];
+		if (element == (size_t)-1)
+			printf("-1 ");
+		else
+			printf("%zu ", element);
+	}
+	puts("");
+	printf("sparse before: (%zu)\n", sdarray->size_sparse);
+	for (size_t i = 0; i < sdarray->size_sparse; i++) {
+		size_t element = sdarray->sparse[i];
+		if (element == (size_t)-1)
+			printf("-1 ");
+		else
+			printf("%zu ", element);
+	}
+	puts("");
+
+	if (sdarray->sparse[index] == (size_t)-1)
+		return;
+	size_t dense_idx = sdarray->sparse[index];
+	sdarray->dense[dense_idx] = sdarray->dense[sdarray->size_dense - 1];
+	sdarray->dense_to_sparse[dense_idx] =
+		sdarray->dense_to_sparse[sdarray->size_dense - 1];
+
+	sdarray->sparse[sdarray->dense_to_sparse[dense_idx]] = dense_idx;
 	sdarray->sparse[index] = (size_t)-1;
+
+	sdarray->size_dense--;
+
+	printf("dense after: (%zu)\n", sdarray->size_dense);
+	for (size_t i = 0; i < sdarray->size_dense; i++) {
+		size_t element = sdarray->dense_to_sparse[i];
+		if (element == (size_t)-1)
+			printf("-1 ");
+		else
+			printf("%zu ", element);
+	}
+	puts("");
+	printf("sparse after: (%zu)\n", sdarray->size_sparse);
+	for (size_t i = 0; i < sdarray->size_sparse; i++) {
+		size_t element = sdarray->sparse[i];
+		if (element == (size_t)-1)
+			printf("-1 ");
+		else
+			printf("%zu ", element);
+	}
+	puts("");
 }
 
 static inline size_t
-_SDARRAY_PREFIX(_sdarray_push_empty)(_SDARRAY_PREFIX(_sdarray) * sdarray) {
+_SDARRAY_PREFIX(_sdarray_push_empty)(_SDARRAY_PREFIX(_sdarray) * sdarray)
+{
 	if (sdarray->size_sparse == sdarray->capacity_sparse)
 		_SDARRAY_PREFIX(_sdarray_extend_sparse)(sdarray);
 	sdarray->sparse[sdarray->size_sparse] = (size_t)-1;

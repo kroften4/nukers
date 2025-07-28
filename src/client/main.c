@@ -8,7 +8,7 @@
 #include "logic/logic.h"
 #include "krft/run_every.h"
 
-#define FPS_CAP 60
+#define FPS_CAP 144
 #define MIN_FRAME_DURATION_MS 1000 / FPS_CAP
 
 static struct game_state local_state;

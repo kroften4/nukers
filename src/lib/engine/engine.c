@@ -47,24 +47,39 @@ entity_id_t add_entity(struct game_state *state)
 	return id;
 }
 
+void remove_entity(struct game_state *state, entity_id_t entity)
+{
+	transform_sdarray_remove(&state->transforms, entity);
+	velocity_sdarray_remove(&state->velocities, entity);
+	aabb_sprite_sdarray_remove(&state->aabb_sprites, entity);
+	aabb_collider_sdarray_remove(&state->colliders, entity);
+	temporary_sdarray_remove(&state->temporaries, entity);
+}
+
 void add_component(struct game_state *state, entity_id_t entity,
 		   enum component type, void *component_data)
 {
 	switch (type) {
 	case COMP_TRANSFORM:
-		transform_sdarray_set(&state->transforms, entity, *(struct transform *)component_data);
+		transform_sdarray_set(&state->transforms, entity,
+				      *(struct transform *)component_data);
 		break;
 	case COMP_VELOCITY:
-		velocity_sdarray_set(&state->velocities, entity, *(struct velocity *)component_data);
+		velocity_sdarray_set(&state->velocities, entity,
+				     *(struct velocity *)component_data);
 		break;
 	case COMP_COLLIDER:
-		aabb_collider_sdarray_set(&state->colliders, entity, *(struct aabb_collider *)component_data);
+		aabb_collider_sdarray_set(
+			&state->colliders, entity,
+			*(struct aabb_collider *)component_data);
 		break;
 	case COMP_AABB_SPRITE:
-		aabb_sprite_sdarray_set(&state->aabb_sprites, entity, *(struct aabb_sprite *)component_data);
+		aabb_sprite_sdarray_set(&state->aabb_sprites, entity,
+					*(struct aabb_sprite *)component_data);
 		break;
 	case COMP_TEMPORARY:
-		temporary_sdarray_set(&state->temporaries, entity, *(struct temporary *)component_data);
+		temporary_sdarray_set(&state->temporaries, entity,
+				      *(struct temporary *)component_data);
 		break;
 	}
 }
