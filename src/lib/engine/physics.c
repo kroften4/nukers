@@ -108,14 +108,24 @@ static void objects_move(struct game_state *state, int delta_time, float toi)
 			*velocity_sdarray_get(&state->velocities, e);
 		struct vector corrected_vel =
 			vector_multiply(vel.v, delta_time * toi);
-		if (corrected_vel.x != 0 || corrected_vel.y != 0)
-			LOGF("vel (%f %f) -> (%f %f), dt %d, toi %f", pos.pos.x,
-			     pos.pos.y, corrected_vel.x, corrected_vel.y,
-			     delta_time, toi);
 		struct transform new_pos = { 0 };
 		new_pos.pos = vector_add(pos.pos, corrected_vel);
 		transform_sdarray_set(&state->transforms, e, new_pos);
 	}
+}
+
+void resolve_collision(struct game_state *state, struct collision collision)
+{
+	struct aabb_collider collider1 =
+		*aabb_collider_sdarray_get(&state->colliders, collision.obj1);
+	if (collider1.on_collision != NULL)
+		collider1.on_collision(state, collision.normal1, collision.obj1,
+				       collision.obj2);
+	struct aabb_collider collider2 =
+		*aabb_collider_sdarray_get(&state->colliders, collision.obj2);
+	if (collider2.on_collision != NULL)
+		collider2.on_collision(state, collision.normal2, collision.obj2,
+				       collision.obj1);
 }
 
 static float calc_first_toi_collisions(struct game_state *state, int delta_time)
@@ -145,8 +155,16 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 			struct vector normal;
 			check_AABB_collision(state, obj1, obj2, &toi, &normal,
 					     delta_time);
-			if (toi == 0)
-				add_collision(state, toi, obj1, obj2, normal);
+			if (toi == 0) {
+				struct collision coll = {
+					.toi = toi,
+					.normal1 = normal,
+					.normal2 = vector_multiply(normal, -1),
+					.obj1 = obj1,
+					.obj2 = obj2
+				};
+				resolve_collision(state, coll);
+			}
 			if (!is_valid_toi(toi))
 				continue;
 
@@ -166,20 +184,6 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 	     state->collisions.size);
 
 	return toi_min;
-}
-
-void resolve_collision(struct game_state *state, struct collision collision)
-{
-	struct aabb_collider collider1 =
-		*aabb_collider_sdarray_get(&state->colliders, collision.obj1);
-	if (collider1.on_collision != NULL)
-		collider1.on_collision(state, collision.normal1, collision.obj1,
-				       collision.obj2);
-	struct aabb_collider collider2 =
-		*aabb_collider_sdarray_get(&state->colliders, collision.obj2);
-	if (collider2.on_collision != NULL)
-		collider2.on_collision(state, collision.normal2, collision.obj2,
-				       collision.obj1);
 }
 
 void notify_on_physics(struct game_state *state, int delta_time)
@@ -215,11 +219,11 @@ void physics_step(struct game_state *state, int delta_time)
 	while (passed_time < delta_time && iterations < cap) {
 		int remaining_time = delta_time - passed_time;
 		float toi = calc_first_toi_collisions(state, remaining_time);
+		objects_move(state, remaining_time, toi);
 		for (size_t i = 0; i < state->collisions.size; i++) {
 			struct collision coll = state->collisions.array[i];
 			resolve_collision(state, coll);
 		}
-		objects_move(state, remaining_time, toi);
 		passed_time += remaining_time * iterations++;
 	}
 	if (iterations == cap)
