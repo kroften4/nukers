@@ -30,9 +30,17 @@ static void check_AABB_collision(struct game_state *state, entity_id_t obj1,
 				 entity_id_t obj2, float *result_toi,
 				 struct vector *normal1, int delta_time)
 {
-	struct velocity vel1 = *velocity_sdarray_get(&state->velocities, obj1);
-	struct velocity vel2 = *velocity_sdarray_get(&state->velocities, obj2);
-	struct vector relative_vel = vector_subtract(vel1.v, vel2.v);
+	struct vector vel1 = { 0, 0 };
+	if (has_component(state, obj1, COMP_VELOCITY)) {
+		struct velocity *vel_comp = (struct velocity *)get_component(state, obj1, COMP_VELOCITY);
+		vel1 = vel_comp->v;
+	}
+	struct vector vel2 = { 0, 0 };
+	if (has_component(state, obj2, COMP_VELOCITY)){
+		struct velocity *vel_comp = (struct velocity *)get_component(state, obj2, COMP_VELOCITY);
+		vel2 = vel_comp->v;
+	}
+	struct vector relative_vel = vector_subtract(vel1, vel2);
 	relative_vel = vector_multiply(relative_vel, delta_time);
 	struct transform pos1 =
 		*transform_sdarray_get(&state->transforms, obj1);
@@ -180,9 +188,6 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 	if (!is_valid_toi(toi_min))
 		return 1;
 
-	// LOGF("dt %d, toi %f, collision amount %zu", delta_time, toi_min,
-	//      state->collisions.size);
-
 	return toi_min;
 }
 
@@ -215,16 +220,17 @@ void physics_step(struct game_state *state, int delta_time)
 	notify_on_physics(state, delta_time);
 	int cap = 100;
 	int iterations = 0;
-	int passed_time = 0;
+	float passed_time = 0;
 	while (passed_time < delta_time && iterations < cap) {
-		int remaining_time = delta_time - passed_time;
+		float remaining_time = delta_time - passed_time;
 		float toi = calc_first_toi_collisions(state, remaining_time);
 		objects_move(state, remaining_time, toi);
 		for (size_t i = 0; i < state->collisions.size; i++) {
 			struct collision coll = state->collisions.array[i];
 			resolve_collision(state, coll);
 		}
-		passed_time += remaining_time * iterations++;
+		passed_time += remaining_time * toi;
+		iterations++;
 	}
 	if (iterations == cap)
 		ERROR("reached 100 collision iterations");

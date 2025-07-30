@@ -36,7 +36,7 @@ static void player_shoot(struct game_state *state, entity_id_t self)
 		get_component(state, self, COMP_TRANSFORM);
 	struct vector bullet_dir =
 		get_mouse_direction(state, player_pos->pos, global.camera);
-	init_bullet(state, player_pos->pos, bullet_dir, 0.5);
+	init_bullet(state, player_pos->pos, bullet_dir, 0.75);
 }
 
 void player_update(struct game_state *state, entity_id_t self, int delta_time)
@@ -64,5 +64,5 @@ void init_player(struct game_state *state)
 				.on_physics = player_update,
 				.on_physics_end = NULL };
 	add_component(state, player, COMP_VELOCITY, &vel);
-	global.player.speed = 0.25;
+	global.player.speed = 0.5;
 }

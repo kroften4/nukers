@@ -16,7 +16,7 @@ struct inputs {
 struct game_state;
 struct collision;
 
-typedef int entity_id_t;
+typedef size_t entity_id_t;
 
 struct collision {
 	entity_id_t obj1;

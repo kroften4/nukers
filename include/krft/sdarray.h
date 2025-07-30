@@ -1,4 +1,3 @@
-#include "krft/log.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,19 +68,13 @@ static inline void
 _SDARRAY_PREFIX(_sdarray_set)(_SDARRAY_PREFIX(_sdarray) *sdarray, size_t index,
 			      SDARRAY_T item)
 {
-	if (index >= sdarray->size_sparse)
-		ERRORF("invalid index %zu/%zu", index, sdarray->size_sparse);
 	if (sdarray->sparse[index] == (size_t)-1) {
-		if (sdarray->size_dense > sdarray->capacity_dense)
-			ERROR("skipped extending");
 		if (sdarray->size_dense == sdarray->capacity_dense)
 			_SDARRAY_PREFIX(_sdarray_extend_dense)(sdarray);
 		sdarray->sparse[index] = sdarray->size_dense;
 		sdarray->dense_to_sparse[sdarray->size_dense] = index;
 		sdarray->size_dense++;
 	}
-	if (sdarray->sparse[index] >- sdarray->size_dense)
-		ERROR("indexing past dense");
 	sdarray->dense[sdarray->sparse[index]] = item;
 }
 
@@ -104,13 +97,8 @@ static inline void
 _SDARRAY_PREFIX(_sdarray_remove)(_SDARRAY_PREFIX(_sdarray) *sdarray,
 				 size_t index)
 {
-	if (index >= sdarray->size_sparse)
-		ERROR("indexing past sparse");
-	if (sdarray->sparse[index] == (size_t)-1) {
-		LOGF("nothing to be removed for %zu", index);
+	if (sdarray->sparse[index] == (size_t)-1)
 		return;
-	}
-	LOGF("removing %zu", index);
 	size_t dense_idx = sdarray->sparse[index];
 	sdarray->dense[dense_idx] = sdarray->dense[sdarray->size_dense - 1];
 	sdarray->dense_to_sparse[dense_idx] =
@@ -125,8 +113,6 @@ _SDARRAY_PREFIX(_sdarray_remove)(_SDARRAY_PREFIX(_sdarray) *sdarray,
 static inline size_t
 _SDARRAY_PREFIX(_sdarray_push_empty)(_SDARRAY_PREFIX(_sdarray) *sdarray)
 {
-	if (sdarray->size_sparse > sdarray->capacity_sparse)
-		ERROR("skipped extending sparse");
 	if (sdarray->size_sparse == sdarray->capacity_sparse)
 		_SDARRAY_PREFIX(_sdarray_extend_sparse)(sdarray);
 	sdarray->sparse[sdarray->size_sparse] = (size_t)-1;
