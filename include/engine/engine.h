@@ -83,12 +83,16 @@ struct aabb_collider {
 #include "krft/sdarray.h"
 
 struct temporary {
-	size_t time_left;
+	int time_left;
 };
 
 #define SDARRAY_T struct temporary
 #define SDARRAY_PREFIX temporary
 #include "krft/sdarray.h"
+
+#define DARRAY_T entity_id_t
+#define DARRAY_PREFIX entity
+#include "krft/darray.h"
 
 // TODO: this one might need to go into game-specific logic, not engine
 struct game_state {
@@ -99,6 +103,7 @@ struct game_state {
 	aabb_sprite_sdarray aabb_sprites;
 	temporary_sdarray temporaries;
 	collision_darray collisions;
+	entity_darray removed;
 	bool running;
 };
 
@@ -109,6 +114,10 @@ enum component {
 	COMP_AABB_SPRITE,
 	COMP_TEMPORARY
 };
+
+void mark_to_remove(struct game_state *state, entity_id_t entity);
+
+void remove_marked(struct game_state *state);
 
 void *get_component(struct game_state *state, entity_id_t entity,
 		    enum component type);

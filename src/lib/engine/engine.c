@@ -1,5 +1,7 @@
 #include "engine/engine.h"
+#include "krft/log.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 void *get_component(struct game_state *state, entity_id_t entity,
 		    enum component type)
@@ -40,11 +42,26 @@ bool has_component(struct game_state *state, entity_id_t entity,
 entity_id_t add_entity(struct game_state *state)
 {
 	entity_id_t id = transform_sdarray_push_empty(&state->transforms);
-	velocity_sdarray_push_empty(&state->velocities);
-	aabb_collider_sdarray_push_empty(&state->colliders);
-	aabb_sprite_sdarray_push_empty(&state->aabb_sprites);
-	temporary_sdarray_push_empty(&state->temporaries);
+	entity_id_t id2 = velocity_sdarray_push_empty(&state->velocities);
+	entity_id_t id3 = aabb_collider_sdarray_push_empty(&state->colliders);
+	entity_id_t id4 = aabb_sprite_sdarray_push_empty(&state->aabb_sprites);
+	entity_id_t id5 = temporary_sdarray_push_empty(&state->temporaries);
+	if (id != id2 || id2 != id3 || id3 != id4 || id4 != id5)
+		ERROR("WOMP WOMP");
 	return id;
+}
+
+void mark_to_remove(struct game_state *state, entity_id_t entity)
+{
+	entity_darray_push(&state->removed, entity);
+}
+
+void remove_marked(struct game_state *state)
+{
+	for (size_t i = 0; i < state->removed.size; i++) {
+		remove_entity(state, state->removed.array[i]);
+	}
+	state->removed.size = 0;
 }
 
 void remove_entity(struct game_state *state, entity_id_t entity)

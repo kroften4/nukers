@@ -180,8 +180,8 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 	if (!is_valid_toi(toi_min))
 		return 1;
 
-	LOGF("dt %d, toi %f, collision amount %zu", delta_time, toi_min,
-	     state->collisions.size);
+	// LOGF("dt %d, toi %f, collision amount %zu", delta_time, toi_min,
+	//      state->collisions.size);
 
 	return toi_min;
 }

@@ -2,6 +2,7 @@
 #include "logic/bullet.h"
 #include "engine/engine.h"
 #include "engine/vector.h"
+#include "krft/log.h"
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -38,8 +39,9 @@ static void bullet_on_collision(struct game_state *state, struct vector normal,
 	struct vector explosion_center = bullet_transform->pos;
 	for (int i = 0; i < 25; i++) {
 		init_explosion_particle(state, explosion_center);
+		LOGF("init explosion %d", i);
 	}
-	remove_entity(state, self);
+	mark_to_remove(state, self);
 }
 
 void init_bullet(struct game_state *state, struct vector start_pos,
