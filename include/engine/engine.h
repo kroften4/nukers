@@ -30,25 +30,8 @@ struct collision {
 #define DARRAY_PREFIX collision
 #include "krft/darray.h"
 
-struct transform {
-	struct vector pos;
-};
-
-#define SDARRAY_T struct transform
-#define SDARRAY_PREFIX transform
-#include "krft/sdarray.h"
-
-typedef void (*on_physics_t)(struct game_state *state, entity_id_t self,
-			     int delta_time);
-
-struct velocity {
-	struct vector v;
-	on_physics_t on_physics;
-	on_physics_t on_physics_end;
-};
-
-#define SDARRAY_T struct velocity
-#define SDARRAY_PREFIX velocity
+#define SDARRAY_T struct vector
+#define SDARRAY_PREFIX vec
 #include "krft/sdarray.h"
 
 struct aabb_sprite {
@@ -82,37 +65,35 @@ struct aabb_collider {
 #define SDARRAY_PREFIX aabb_collider
 #include "krft/sdarray.h"
 
-struct temporary {
-	int time_left;
-};
-
-#define SDARRAY_T struct temporary
-#define SDARRAY_PREFIX temporary
+#define SDARRAY_T int
+#define SDARRAY_PREFIX int
 #include "krft/sdarray.h"
 
 #define DARRAY_T entity_id_t
 #define DARRAY_PREFIX entity
 #include "krft/darray.h"
 
-// TODO: this one might need to go into game-specific logic, not engine
+// TODO: separate ECS out, make engine provide useful components and systems
 struct game_state {
 	struct inputs inputs;
-	transform_sdarray transforms;
-	velocity_sdarray velocities;
+	vec_sdarray positions;
+	vec_sdarray velocities;
+	vec_sdarray accelerations;
 	aabb_collider_sdarray colliders;
 	aabb_sprite_sdarray aabb_sprites;
-	temporary_sdarray temporaries;
+	int_sdarray lifetimes;
 	collision_darray collisions;
 	entity_darray removed;
 	bool running;
 };
 
 enum component {
-	COMP_TRANSFORM,
+	COMP_POSITION,
 	COMP_VELOCITY,
+	COMP_ACCELERATION,
 	COMP_COLLIDER,
 	COMP_AABB_SPRITE,
-	COMP_TEMPORARY
+	COMP_LIFETIME
 };
 
 void mark_to_remove(struct game_state *state, entity_id_t entity);

@@ -3,6 +3,7 @@
 #include "engine/physics.h"
 #include "engine/lifetime.h"
 #include "global.h"
+#include "logic/logic.h"
 #include "render.h"
 #include <SDL3/SDL.h>
 
@@ -12,7 +13,9 @@ void update(struct game_state *state, int delta_time, SDL_Event *event, SDL_Rend
 
 	lifetime_tick(state, delta_time);
 
+	before_physics(state, delta_time);
 	physics_step(state, delta_time);
+	after_physics(state, delta_time);
 	
 	remove_marked(state);
 

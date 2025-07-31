@@ -6,5 +6,7 @@
 
 void init_player(struct game_state *state);
 
+void player_update(struct game_state *state, entity_id_t self, int delta_time);
+
 #endif
 

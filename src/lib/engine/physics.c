@@ -32,26 +32,26 @@ static void check_AABB_collision(struct game_state *state, entity_id_t obj1,
 {
 	struct vector vel1 = { 0, 0 };
 	if (has_component(state, obj1, COMP_VELOCITY)) {
-		struct velocity *vel_comp = (struct velocity *)get_component(state, obj1, COMP_VELOCITY);
-		vel1 = vel_comp->v;
+		struct vector *vel_comp = (struct vector *)get_component(state, obj1, COMP_VELOCITY);
+		vel1 = *vel_comp;
 	}
 	struct vector vel2 = { 0, 0 };
 	if (has_component(state, obj2, COMP_VELOCITY)){
-		struct velocity *vel_comp = (struct velocity *)get_component(state, obj2, COMP_VELOCITY);
-		vel2 = vel_comp->v;
+		struct vector *vel_comp = (struct vector *)get_component(state, obj2, COMP_VELOCITY);
+		vel2 = *vel_comp;
 	}
 	struct vector relative_vel = vector_subtract(vel1, vel2);
 	relative_vel = vector_multiply(relative_vel, delta_time);
-	struct transform pos1 =
-		*transform_sdarray_get(&state->transforms, obj1);
-	struct transform pos2 =
-		*transform_sdarray_get(&state->transforms, obj2);
+	struct vector pos1 =
+		*vec_sdarray_get(&state->positions, obj1);
+	struct vector pos2 =
+		*vec_sdarray_get(&state->positions, obj2);
 	struct aabb_collider size1 =
 		*aabb_collider_sdarray_get(&state->colliders, obj1);
 	struct aabb_collider size2 =
 		*aabb_collider_sdarray_get(&state->colliders, obj2);
-	struct AABB_bounds obj1_bounds = AABB_get_bounds(pos1.pos, size1.size);
-	struct AABB_bounds obj2_bounds = AABB_get_bounds(pos2.pos, size2.size);
+	struct AABB_bounds obj1_bounds = AABB_get_bounds(pos1, size1.size);
+	struct AABB_bounds obj2_bounds = AABB_get_bounds(pos2, size2.size);
 
 	float toi_min = 99;
 	*normal1 = VEC_ZERO;
@@ -110,15 +110,14 @@ static void objects_move(struct game_state *state, int delta_time, float toi)
 	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
 		if (state->velocities.sparse[e] == (size_t)-1)
 			continue;
-		struct transform pos =
-			*transform_sdarray_get(&state->transforms, e);
-		struct velocity vel =
-			*velocity_sdarray_get(&state->velocities, e);
+		struct vector pos =
+			*vec_sdarray_get(&state->positions, e);
+		struct vector vel =
+			*vec_sdarray_get(&state->velocities, e);
 		struct vector corrected_vel =
-			vector_multiply(vel.v, delta_time * toi);
-		struct transform new_pos = { 0 };
-		new_pos.pos = vector_add(pos.pos, corrected_vel);
-		transform_sdarray_set(&state->transforms, e, new_pos);
+			vector_multiply(vel, delta_time * toi);
+		struct vector new_pos = vector_add(pos, corrected_vel);
+		vec_sdarray_set(&state->positions, e, new_pos);
 	}
 }
 
@@ -191,33 +190,8 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 	return toi_min;
 }
 
-void notify_on_physics(struct game_state *state, int delta_time)
-{
-	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
-		if (!has_component(state, e, COMP_VELOCITY))
-			continue;
-		struct velocity *physics_comp =
-			get_component(state, e, COMP_VELOCITY);
-		if (physics_comp->on_physics != NULL)
-			physics_comp->on_physics(state, e, delta_time);
-	}
-}
-
-void notify_on_physics_end(struct game_state *state, int delta_time)
-{
-	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
-		if (!has_component(state, e, COMP_VELOCITY))
-			continue;
-		struct velocity *physics_comp =
-			get_component(state, e, COMP_VELOCITY);
-		if (physics_comp->on_physics_end != NULL)
-			physics_comp->on_physics_end(state, e, delta_time);
-	}
-}
-
 void physics_step(struct game_state *state, int delta_time)
 {
-	notify_on_physics(state, delta_time);
 	int cap = 100;
 	int iterations = 0;
 	float passed_time = 0;
@@ -234,5 +208,4 @@ void physics_step(struct game_state *state, int delta_time)
 	}
 	if (iterations == cap)
 		ERROR("reached 100 collision iterations");
-	notify_on_physics_end(state, delta_time);
 }

@@ -1,5 +1,4 @@
 #include "engine/engine.h"
-#include "krft/log.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -7,16 +6,18 @@ void *get_component(struct game_state *state, entity_id_t entity,
 		    enum component type)
 {
 	switch (type) {
-	case COMP_TRANSFORM:
-		return transform_sdarray_get(&state->transforms, entity);
+	case COMP_POSITION:
+		return vec_sdarray_get(&state->positions, entity);
 	case COMP_VELOCITY:
-		return velocity_sdarray_get(&state->velocities, entity);
+		return vec_sdarray_get(&state->velocities, entity);
+	case COMP_ACCELERATION:
+		return vec_sdarray_get(&state->accelerations, entity);
 	case COMP_COLLIDER:
 		return aabb_collider_sdarray_get(&state->colliders, entity);
 	case COMP_AABB_SPRITE:
 		return aabb_sprite_sdarray_get(&state->aabb_sprites, entity);
-	case COMP_TEMPORARY:
-		return temporary_sdarray_get(&state->temporaries, entity);
+	case COMP_LIFETIME:
+		return int_sdarray_get(&state->lifetimes, entity);
 	}
 	return NULL;
 }
@@ -25,29 +26,29 @@ bool has_component(struct game_state *state, entity_id_t entity,
 		   enum component type)
 {
 	switch (type) {
-	case COMP_TRANSFORM:
-		return state->transforms.sparse[entity] != (size_t)(-1);
+	case COMP_POSITION:
+		return state->positions.sparse[entity] != (size_t)(-1);
 	case COMP_VELOCITY:
 		return state->velocities.sparse[entity] != (size_t)(-1);
+	case COMP_ACCELERATION:
+		return state->accelerations.sparse[entity] != (size_t)(-1);
 	case COMP_COLLIDER:
 		return state->colliders.sparse[entity] != (size_t)(-1);
 	case COMP_AABB_SPRITE:
 		return state->aabb_sprites.sparse[entity] != (size_t)(-1);
-	case COMP_TEMPORARY:
-		return state->temporaries.sparse[entity] != (size_t)(-1);
+	case COMP_LIFETIME:
+		return state->lifetimes.sparse[entity] != (size_t)(-1);
 	}
 	return NULL;
 }
 
 entity_id_t add_entity(struct game_state *state)
 {
-	entity_id_t id = transform_sdarray_push_empty(&state->transforms);
-	entity_id_t id2 = velocity_sdarray_push_empty(&state->velocities);
-	entity_id_t id3 = aabb_collider_sdarray_push_empty(&state->colliders);
-	entity_id_t id4 = aabb_sprite_sdarray_push_empty(&state->aabb_sprites);
-	entity_id_t id5 = temporary_sdarray_push_empty(&state->temporaries);
-	if (id != id2 || id2 != id3 || id3 != id4 || id4 != id5)
-		ERROR("WOMP WOMP");
+	entity_id_t id = vec_sdarray_push_empty(&state->positions);
+	vec_sdarray_push_empty(&state->velocities);
+	aabb_collider_sdarray_push_empty(&state->colliders);
+	aabb_sprite_sdarray_push_empty(&state->aabb_sprites);
+	int_sdarray_push_empty(&state->lifetimes);
 	return id;
 }
 
@@ -66,24 +67,28 @@ void remove_marked(struct game_state *state)
 
 void remove_entity(struct game_state *state, entity_id_t entity)
 {
-	transform_sdarray_remove(&state->transforms, entity);
-	velocity_sdarray_remove(&state->velocities, entity);
+	vec_sdarray_remove(&state->positions, entity);
+	vec_sdarray_remove(&state->velocities, entity);
 	aabb_sprite_sdarray_remove(&state->aabb_sprites, entity);
 	aabb_collider_sdarray_remove(&state->colliders, entity);
-	temporary_sdarray_remove(&state->temporaries, entity);
+	int_sdarray_remove(&state->lifetimes, entity);
 }
 
 void add_component(struct game_state *state, entity_id_t entity,
 		   enum component type, void *component_data)
 {
 	switch (type) {
-	case COMP_TRANSFORM:
-		transform_sdarray_set(&state->transforms, entity,
-				      *(struct transform *)component_data);
+	case COMP_POSITION:
+		vec_sdarray_set(&state->positions, entity,
+				*(struct vector *)component_data);
 		break;
 	case COMP_VELOCITY:
-		velocity_sdarray_set(&state->velocities, entity,
-				     *(struct velocity *)component_data);
+		vec_sdarray_set(&state->velocities, entity,
+				*(struct vector *)component_data);
+		break;
+	case COMP_ACCELERATION:
+		vec_sdarray_set(&state->accelerations, entity,
+				*(struct vector *)component_data);
 		break;
 	case COMP_COLLIDER:
 		aabb_collider_sdarray_set(
@@ -94,9 +99,9 @@ void add_component(struct game_state *state, entity_id_t entity,
 		aabb_sprite_sdarray_set(&state->aabb_sprites, entity,
 					*(struct aabb_sprite *)component_data);
 		break;
-	case COMP_TEMPORARY:
-		temporary_sdarray_set(&state->temporaries, entity,
-				      *(struct temporary *)component_data);
+	case COMP_LIFETIME:
+		int_sdarray_set(&state->lifetimes, entity,
+				*(int *)component_data);
 		break;
 	}
 }

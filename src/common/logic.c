@@ -9,21 +9,19 @@ static void camera_follow(struct game_state *state, entity_id_t self,
 			  int delta_time)
 {
 	(void)delta_time;
-	struct transform *player_tf =
-		get_component(state, global.player.id, COMP_TRANSFORM);
-	struct transform *camera_tf = get_component(state, self, COMP_TRANSFORM);
-	camera_tf->pos = player_tf->pos;
+	struct vector *player_tf =
+		get_component(state, global.player.id, COMP_POSITION);
+	struct vector *camera_tf = get_component(state, self, COMP_POSITION);
+	*camera_tf = *player_tf;
 }
 
 static void init_camera(struct game_state *state)
 {
 	entity_id_t camera = add_entity(state);
 	global.camera = camera;
-	struct transform transform = { .pos = { 0, 0 } };
-	add_component(state, camera, COMP_TRANSFORM, &transform);
-	struct velocity velocity = { .v = { 0, 0 },
-				     .on_physics = NULL,
-				     .on_physics_end = camera_follow };
+	struct vector pos = { 0, 0 };
+	add_component(state, camera, COMP_POSITION, &pos);
+	struct vector velocity = { 0, 0 };
 	add_component(state, camera, COMP_VELOCITY, &velocity);
 	struct aabb_sprite aabb_sprite = { .size = { 640, 480 },
 					   .color = cs_transparent };
@@ -34,8 +32,8 @@ static entity_id_t init_wall_tile(struct game_state *state, size_t x, size_t y)
 {
 	entity_id_t tile = add_entity(state);
 	int scale = 50;
-	struct transform transform = { .pos = { x * scale, y * scale } };
-	add_component(state, tile, COMP_TRANSFORM, &transform);
+	struct vector pos = { x * scale, y * scale };
+	add_component(state, tile, COMP_POSITION, &pos);
 	struct vector size = { scale, scale };
 	struct aabb_sprite sprite = { .size = size, .color = cs_dark_purple };
 	add_component(state, tile, COMP_AABB_SPRITE, &sprite);
@@ -69,6 +67,16 @@ static void init_walls(struct game_state *state)
 	}
 	// TODO: idk maybe i'll use it for smth
 	(void)wall_grid;
+}
+
+void before_physics(struct game_state *state, int delta_time)
+{
+	player_update(state, global.player.id, delta_time);
+}
+
+void after_physics(struct game_state *state, int delta_time)
+{
+	camera_follow(state, global.camera, delta_time);
 }
 
 void init_game(struct game_state *state)

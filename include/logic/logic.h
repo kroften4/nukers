@@ -20,5 +20,9 @@ struct game_obj *find_obj_by_tag(struct game_state state, enum game_obj_tag type
 
 void init_game(struct game_state *state);
 
+void before_physics(struct game_state *state, int delta_time);
+
+void after_physics(struct game_state *state, int delta_time);
+
 #endif
 
