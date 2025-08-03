@@ -11,7 +11,7 @@
 #define FPS_CAP 144
 #define MIN_FRAME_DURATION_MS 1000 / FPS_CAP
 
-static struct game_state local_state;
+static struct game_state local_state = {0};
 
 struct update_args {
 	SDL_Event *event;

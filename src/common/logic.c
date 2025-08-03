@@ -4,43 +4,47 @@
 #include "logic/player.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void camera_follow(struct game_state *state, entity_id_t self,
 			  int delta_time)
 {
 	(void)delta_time;
-	struct vector *player_tf =
-		get_component(state, global.player.id, COMP_POSITION);
-	struct vector *camera_tf = get_component(state, self, COMP_POSITION);
-	*camera_tf = *player_tf;
+	struct vector *player_pos = get_component(
+		&state->entity_manager, global.player.id, position_id);
+	struct vector *camera_pos =
+		get_component(&state->entity_manager, self, position_id);
+	*camera_pos = *player_pos;
 }
 
 static void init_camera(struct game_state *state)
 {
-	entity_id_t camera = add_entity(state);
+	entity_id_t camera = add_entity(&state->entity_manager);
 	global.camera = camera;
 	struct vector pos = { 0, 0 };
-	add_component(state, camera, COMP_POSITION, &pos);
+	add_component(&state->entity_manager, camera, position_id, &pos);
 	struct vector velocity = { 0, 0 };
-	add_component(state, camera, COMP_VELOCITY, &velocity);
+	add_component(&state->entity_manager, camera, velocity_id, &velocity);
 	struct aabb_sprite aabb_sprite = { .size = { 640, 480 },
 					   .color = cs_transparent };
-	add_component(state, camera, COMP_AABB_SPRITE, &aabb_sprite);
+	add_component(&state->entity_manager, camera, aabb_sprite_id,
+		      &aabb_sprite);
 }
 
 static entity_id_t init_wall_tile(struct game_state *state, size_t x, size_t y)
 {
-	entity_id_t tile = add_entity(state);
+	entity_id_t tile = add_entity(&state->entity_manager);
 	int scale = 50;
 	struct vector pos = { x * scale, y * scale };
-	add_component(state, tile, COMP_POSITION, &pos);
+	add_component(&state->entity_manager, tile, position_id, &pos);
 	struct vector size = { scale, scale };
 	struct aabb_sprite sprite = { .size = size, .color = cs_dark_purple };
-	add_component(state, tile, COMP_AABB_SPRITE, &sprite);
+	add_component(&state->entity_manager, tile, aabb_sprite_id, &sprite);
 	struct aabb_collider collider = { .size = size,
 					  .on_collision = NULL,
 					  .type = COLL_STATIC };
-	add_component(state, tile, COMP_COLLIDER, &collider);
+	add_component(&state->entity_manager, tile, aabb_collider_id,
+		      &collider);
 	return tile;
 }
 
@@ -81,6 +85,8 @@ void after_physics(struct game_state *state, int delta_time)
 
 void init_game(struct game_state *state)
 {
+	memset(state, 0, sizeof(struct game_state));
+	register_engine_components(state);
 	state->running = true;
 	init_camera(state);
 	init_player(state);

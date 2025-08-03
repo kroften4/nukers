@@ -1,17 +1,18 @@
 #include "engine/engine.h"
+#include "engine/entity_manager.h"
+#include <stddef.h>
 
 void lifetime_tick(struct game_state *state, int delta_time)
 {
-	for (size_t i = 0; i < state->lifetimes.size_dense; i++) {
-		int *const time_left = &state->lifetimes.dense[i];
-		*time_left -= delta_time;
-	}
-	for (size_t e = 0; e < state->lifetimes.size_sparse; e++) {
-		if (!has_component(state, e, COMP_LIFETIME))
-			continue;
+	struct component_pool *lifetime_pool =
+		&state->entity_manager.component_pools[lifetime_id];
+
+	for (size_t dense = 0; dense < lifetime_pool->dense_count; dense++) {
+		entity_id_t entity_id = lifetime_pool->dense_to_sparse[dense];
 		int *const time_left =
-			get_component(state, e, COMP_LIFETIME);
+			get_component_from_pool(lifetime_pool, entity_id);
+		*time_left -= delta_time;
 		if (*time_left <= 0)
-			mark_to_remove(state, e);
+			mark_to_remove(state, entity_id);
 	}
 }

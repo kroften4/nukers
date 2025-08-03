@@ -1,4 +1,5 @@
 #include "engine/physics.h"
+#include "engine/entity_manager.h"
 #include "engine/vector.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -31,27 +32,29 @@ static void check_AABB_collision(struct game_state *state, entity_id_t obj1,
 				 struct vector *normal1, int delta_time)
 {
 	struct vector vel1 = { 0, 0 };
-	if (has_component(state, obj1, COMP_VELOCITY)) {
-		struct vector *vel_comp = (struct vector *)get_component(state, obj1, COMP_VELOCITY);
+	if (has_component(&state->entity_manager, obj1, velocity_id)) {
+		struct vector *vel_comp = (struct vector *)get_component(
+			&state->entity_manager, obj1, velocity_id);
 		vel1 = *vel_comp;
 	}
 	struct vector vel2 = { 0, 0 };
-	if (has_component(state, obj2, COMP_VELOCITY)){
-		struct vector *vel_comp = (struct vector *)get_component(state, obj2, COMP_VELOCITY);
+	if (has_component(&state->entity_manager, obj2, velocity_id)) {
+		struct vector *vel_comp = (struct vector *)get_component(
+			&state->entity_manager, obj2, velocity_id);
 		vel2 = *vel_comp;
 	}
 	struct vector relative_vel = vector_subtract(vel1, vel2);
 	relative_vel = vector_multiply(relative_vel, delta_time);
-	struct vector pos1 =
-		*vec_sdarray_get(&state->positions, obj1);
-	struct vector pos2 =
-		*vec_sdarray_get(&state->positions, obj2);
-	struct aabb_collider size1 =
-		*aabb_collider_sdarray_get(&state->colliders, obj1);
-	struct aabb_collider size2 =
-		*aabb_collider_sdarray_get(&state->colliders, obj2);
-	struct AABB_bounds obj1_bounds = AABB_get_bounds(pos1, size1.size);
-	struct AABB_bounds obj2_bounds = AABB_get_bounds(pos2, size2.size);
+	struct vector *pos1 =
+		get_component(&state->entity_manager, obj1, position_id);
+	struct vector *pos2 =
+		get_component(&state->entity_manager, obj2, position_id);
+	struct aabb_collider *size1 =
+		get_component(&state->entity_manager, obj1, aabb_collider_id);
+	struct aabb_collider *size2 =
+		get_component(&state->entity_manager, obj2, aabb_collider_id);
+	struct AABB_bounds obj1_bounds = AABB_get_bounds(*pos1, size1->size);
+	struct AABB_bounds obj2_bounds = AABB_get_bounds(*pos2, size2->size);
 
 	float toi_min = 99;
 	*normal1 = VEC_ZERO;
@@ -107,32 +110,36 @@ static void add_collision(struct game_state *state, float toi, entity_id_t obj1,
 
 static void objects_move(struct game_state *state, int delta_time, float toi)
 {
-	for (size_t e = 0; e < state->velocities.size_sparse; e++) {
-		if (state->velocities.sparse[e] == (size_t)-1)
-			continue;
-		struct vector pos =
-			*vec_sdarray_get(&state->positions, e);
-		struct vector vel =
-			*vec_sdarray_get(&state->velocities, e);
+	struct component_pool *velocity_pool =
+		&state->entity_manager.component_pools[velocity_id];
+	struct component_pool *position_pool =
+		&state->entity_manager.component_pools[position_id];
+	for (size_t dense = 0; dense < velocity_pool->dense_count; dense++) {
+		entity_id_t entity_id = velocity_pool->dense_to_sparse[dense];
+		struct vector *pos =
+			get_component_from_pool(position_pool, entity_id);
+		struct vector *vel =
+			get_component_from_pool(velocity_pool, entity_id);
 		struct vector corrected_vel =
-			vector_multiply(vel, delta_time * toi);
-		struct vector new_pos = vector_add(pos, corrected_vel);
-		vec_sdarray_set(&state->positions, e, new_pos);
+			vector_multiply(*vel, delta_time * toi);
+		struct vector new_pos = vector_add(*pos, corrected_vel);
+		*pos = new_pos;
 	}
 }
 
 void resolve_collision(struct game_state *state, struct collision collision)
 {
-	struct aabb_collider collider1 =
-		*aabb_collider_sdarray_get(&state->colliders, collision.obj1);
-	if (collider1.on_collision != NULL)
-		collider1.on_collision(state, collision.normal1, collision.obj1,
-				       collision.obj2);
-	struct aabb_collider collider2 =
-		*aabb_collider_sdarray_get(&state->colliders, collision.obj2);
-	if (collider2.on_collision != NULL)
-		collider2.on_collision(state, collision.normal2, collision.obj2,
-				       collision.obj1);
+	struct aabb_collider *collider1 = get_component(
+		&state->entity_manager, collision.obj1, aabb_collider_id);
+	if (collider1->on_collision != NULL)
+		collider1->on_collision(state, collision.normal1,
+					collision.obj1, collision.obj2);
+
+	struct aabb_collider *collider2 = get_component(
+		&state->entity_manager, collision.obj2, aabb_collider_id);
+	if (collider2->on_collision != NULL)
+		collider2->on_collision(state, collision.normal2,
+					collision.obj2, collision.obj1);
 }
 
 static float calc_first_toi_collisions(struct game_state *state, int delta_time)
@@ -140,22 +147,19 @@ static float calc_first_toi_collisions(struct game_state *state, int delta_time)
 	float toi_min = 99;
 	state->collisions.size = 0;
 
-	for (size_t i = 0; i < state->colliders.size_sparse - 1; i++) {
-		if (state->colliders.sparse[i] == (size_t)-1)
-			continue;
-		for (size_t j = i + 1; j < state->colliders.size_sparse; j++) {
-			if (state->colliders.sparse[j] == (size_t)-1)
-				continue;
-			entity_id_t obj1 = i;
-			entity_id_t obj2 = j;
-			struct aabb_collider collider1 =
-				*aabb_collider_sdarray_get(&state->colliders,
-							   obj1);
-			struct aabb_collider collider2 =
-				*aabb_collider_sdarray_get(&state->colliders,
-							   obj2);
-			if (collider1.type == COLL_STATIC &&
-			    collider2.type == COLL_STATIC)
+	struct component_pool *collider_pool =
+		&state->entity_manager.component_pools[aabb_collider_id];
+	for (size_t d_i = 0; d_i < collider_pool->dense_count - 1; d_i++) {
+		for (size_t d_j = d_i + 1; d_j < collider_pool->dense_count;
+		     d_j++) {
+			entity_id_t obj1 = collider_pool->dense_to_sparse[d_i];
+			entity_id_t obj2 = collider_pool->dense_to_sparse[d_j];
+			struct aabb_collider *collider1 =
+				get_component_from_pool(collider_pool, obj1);
+			struct aabb_collider *collider2 =
+				get_component_from_pool(collider_pool, obj2);
+			if (collider1->type == COLL_STATIC &&
+			    collider2->type == COLL_STATIC)
 				continue;
 
 			float toi;
@@ -208,4 +212,36 @@ void physics_step(struct game_state *state, int delta_time)
 	}
 	if (iterations == cap)
 		ERROR("reached 100 collision iterations");
+}
+
+void apply_total_force(struct game_state *state, entity_id_t entity,
+		       int delta_time)
+{
+	struct vector *vel =
+		get_component(&state->entity_manager, entity, velocity_id);
+
+	struct rigidbody *rb =
+		get_component(&state->entity_manager, entity, rigidbody_id);
+	struct vector acceleration =
+		vector_multiply(rb->force, rb->inverse_mass);
+	*vel = vector_add(*vel, vector_multiply(acceleration, delta_time));
+	rb->force = VEC_ZERO;
+}
+
+void apply_forces(struct game_state *state, int delta_time)
+{
+	struct component_pool *rigidbody_pool =
+		&state->entity_manager.component_pools[rigidbody_id];
+	for (size_t dense = 0; dense < rigidbody_pool->dense_count; dense++) {
+		entity_id_t entity = rigidbody_pool->dense_to_sparse[dense];
+		apply_total_force(state, entity, delta_time);
+	}
+}
+
+void add_force(struct game_state *state, entity_id_t entity,
+	       struct vector force)
+{
+	struct rigidbody *rb =
+		get_component(&state->entity_manager, entity, rigidbody_id);
+	rb->force = vector_add(rb->force, force);
 }

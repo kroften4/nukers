@@ -1,3 +1,4 @@
+#include "engine/entity_manager.h"
 #include "engine/vector.h"
 #include <SDL3/SDL.h>
 #include "engine/engine.h"
@@ -15,9 +16,9 @@ struct vector world_to_screen_coords(struct game_state *state,
 				     struct vector coords, entity_id_t camera)
 {
 	struct vector *cam_pos =
-		get_component(state, camera, COMP_POSITION);
+		get_component(&state->entity_manager, camera, position_id);
 	struct aabb_sprite *cam_size =
-		get_component(state, camera, COMP_AABB_SPRITE);
+		get_component(&state->entity_manager, camera, aabb_sprite_id);
 	struct AABB_bounds cam_bounds =
 		AABB_get_bounds(*cam_pos, cam_size->size);
 	coords.x -= cam_bounds.left;
@@ -29,9 +30,9 @@ struct vector screen_to_world_coords(struct game_state *state,
 				     struct vector coords, entity_id_t camera)
 {
 	struct vector *cam_pos =
-		get_component(state, camera, COMP_POSITION);
+		get_component(&state->entity_manager, camera, position_id);
 	struct aabb_sprite *cam_size =
-		get_component(state, camera, COMP_AABB_SPRITE);
+		get_component(&state->entity_manager, camera, aabb_sprite_id);
 	struct AABB_bounds cam_bounds =
 		AABB_get_bounds(*cam_pos, cam_size->size);
 	coords.x += cam_bounds.left;
@@ -43,12 +44,13 @@ static void draw_AABB(struct game_state *state, SDL_Renderer *renderer,
 		      entity_id_t aabb, entity_id_t camera)
 {
 	struct aabb_sprite *aabb_sprite =
-		get_component(state, aabb, COMP_AABB_SPRITE);
+		get_component(&state->entity_manager, aabb, aabb_sprite_id);
 	SDL_SetRenderDrawColor(renderer, aabb_sprite->color.r,
 			       aabb_sprite->color.g, aabb_sprite->color.b,
 			       aabb_sprite->color.a);
 
-	struct vector *aabb_pos = get_component(state, aabb, COMP_POSITION);
+	struct vector *aabb_pos =
+		get_component(&state->entity_manager, aabb, position_id);
 	struct AABB_bounds bounds =
 		AABB_get_bounds(*aabb_pos, aabb_sprite->size);
 	struct vector up_left = { .x = bounds.left, .y = bounds.up };
@@ -64,10 +66,12 @@ static void draw_AABB(struct game_state *state, SDL_Renderer *renderer,
 static void draw_all_AABBs(struct game_state *state, SDL_Renderer *renderer,
 			   entity_id_t camera)
 {
-	for (size_t e = 0; e < state->aabb_sprites.size_sparse; e++) {
-		if (!has_component(state, e, COMP_AABB_SPRITE))
-			continue;
-		draw_AABB(state, renderer, e, camera);
+	struct component_pool *aabb_sprite_pool =
+		&state->entity_manager.component_pools[aabb_sprite_id];
+	for (size_t dense = 0; dense < aabb_sprite_pool->dense_count; dense++) {
+		entity_id_t entity_id =
+			aabb_sprite_pool->dense_to_sparse[dense];
+		draw_AABB(state, renderer, entity_id, camera);
 	}
 }
 

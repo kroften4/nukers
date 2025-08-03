@@ -13,7 +13,9 @@ void update(struct game_state *state, int delta_time, SDL_Event *event, SDL_Rend
 
 	lifetime_tick(state, delta_time);
 
+
 	before_physics(state, delta_time);
+	apply_forces(state, delta_time);
 	physics_step(state, delta_time);
 	after_physics(state, delta_time);
 	
