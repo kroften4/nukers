@@ -107,7 +107,10 @@ static inline void __extend_all_sparse(struct entity_manager *manager)
 			&manager->component_pools[pool_id];
 		__extend_sparse(pool, manager->sparse_capacity);
 	}
-	manager->sparse_capacity *= 2;
+	if (manager->sparse_capacity == 0)
+		manager->sparse_capacity = 1;
+	else
+		manager->sparse_capacity *= 2;
 }
 
 static inline entity_id_t add_entity(struct entity_manager *manager)
